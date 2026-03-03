@@ -5,347 +5,481 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Banking Service Dashboard</title>
 <style>
-  :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f8fafc; --card: #fff; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
-  .header { background: var(--primary); color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-  .header h1 { font-size: 1.25rem; }
-  .header .user-info { font-size: 0.875rem; }
-  .layout { display: flex; min-height: calc(100vh - 56px); }
-  .sidebar { width: 220px; background: var(--card); border-right: 1px solid var(--border); padding: 1rem 0; }
-  .sidebar a { display: block; padding: 0.75rem 1.5rem; color: var(--text); text-decoration: none; font-size: 0.875rem; border-left: 3px solid transparent; }
-  .sidebar a:hover, .sidebar a.active { background: #f1f5f9; border-left-color: var(--primary); color: var(--primary); }
-  .main { flex: 1; padding: 2rem; max-width: 900px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-  .card h2 { font-size: 1rem; margin-bottom: 1rem; }
-  .form-group { margin-bottom: 1rem; }
-  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
-  .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; }
-  .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
-  .btn-primary { background: var(--primary); color: #fff; }
-  .btn-danger { background: var(--danger); color: #fff; }
-  .btn-success { background: var(--success); color: #fff; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border); }
-  th { font-weight: 600; color: var(--muted); }
-  .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
-  .badge-success { background: #dcfce7; color: #166534; }
-  .badge-warn { background: #fef3c7; color: #92400e; }
-  .badge-danger { background: #fee2e2; color: #991b1b; }
-  .ops-panel { position: fixed; right: 0; top: 56px; width: 350px; height: calc(100vh - 56px); background: #1e293b; color: #e2e8f0; padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.75rem; transform: translateX(100%); transition: transform 0.3s; }
-  .ops-panel.open { transform: translateX(0); }
-  .ops-toggle { position: fixed; right: 1rem; bottom: 1rem; z-index: 100; }
-  .ops-entry { border-bottom: 1px solid #334155; padding: 0.5rem 0; }
-  .ops-entry .req-id { color: #60a5fa; }
-  .ops-entry .status-ok { color: #4ade80; }
-  .ops-entry .status-err { color: #f87171; }
-  .ops-entry .latency { color: #fbbf24; }
-  .alert { padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem; }
-  .alert-error { background: #fee2e2; color: #991b1b; }
-  .alert-success { background: #dcfce7; color: #166534; }
-  .guide { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
-  .guide h3 { font-size: 0.875rem; color: var(--primary); margin-bottom: 0.5rem; }
-  .guide ol { padding-left: 1.25rem; font-size: 0.8rem; color: var(--muted); }
-  .guide li.done { color: var(--success); text-decoration: line-through; }
-  .guide li.current { color: var(--primary); font-weight: 600; }
-  #view { display: none; }
+:root {
+  --primary: #1e40af; --primary-light: #3b82f6; --primary-bg: #eff6ff;
+  --success: #16a34a; --success-bg: #f0fdf4;
+  --danger: #dc2626; --danger-bg: #fef2f2;
+  --warn: #d97706; --warn-bg: #fffbeb;
+  --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
+  --text: #0f172a; --muted: #64748b; --light: #94a3b8;
+  --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* Header */
+.header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: #fff; padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+.header .user-bar { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+.header .user-bar .email { opacity: 0.9; }
+.header button { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; }
+.header button:hover { background: rgba(255,255,255,0.25); }
+
+/* Layout */
+.layout { display: flex; min-height: calc(100vh - 56px); }
+
+/* Sidebar */
+.sidebar { width: 200px; background: var(--card); border-right: 1px solid var(--border); padding: 0.5rem 0; flex-shrink: 0; }
+.sidebar .nav-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--muted); text-decoration: none; font-size: 0.85rem; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+.sidebar .nav-item:hover { background: var(--primary-bg); color: var(--primary); }
+.sidebar .nav-item.active { background: var(--primary-bg); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+.sidebar .nav-item.disabled { opacity: 0.4; pointer-events: none; }
+.sidebar .nav-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--light); padding: 12px 16px 4px; font-weight: 600; }
+
+/* Main */
+.main { flex: 1; padding: 1.5rem 2rem; max-width: 960px; overflow-y: auto; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* Cards */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
+
+/* Forms */
+.form-row { margin-bottom: 0.75rem; }
+.form-row label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+.form-row input, .form-row select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.85rem; outline: none; transition: border 0.15s; }
+.form-row input:focus, .form-row select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--primary-bg); }
+.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+/* Alerts */
+.alert { padding: 10px 14px; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.75rem; display: none; }
+.alert.show { display: block; }
+.alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #bbf7d0; }
+.alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th { text-align: left; padding: 8px 10px; background: #f8fafc; color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 2px solid var(--border); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: #fafbfc; }
+
+/* Badges */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+.badge-active { background: var(--success-bg); color: var(--success); }
+.badge-frozen, .badge-blocked { background: var(--warn-bg); color: var(--warn); }
+.badge-closed, .badge-cancelled { background: var(--danger-bg); color: var(--danger); }
+.badge-debit, .badge-card_spend { background: var(--danger-bg); color: var(--danger); }
+.badge-credit, .badge-deposit { background: var(--success-bg); color: var(--success); }
+
+/* Money */
+.money { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; }
+.money-pos { color: var(--success); }
+.money-neg { color: var(--danger); }
+
+/* Ops Panel */
+.ops-panel { position: fixed; bottom: 0; left: 200px; right: 0; height: 180px; background: #1e293b; color: #e2e8f0; font-family: 'SF Mono', monospace; font-size: 0.7rem; overflow-y: auto; border-top: 2px solid var(--primary); display: none; z-index: 100; }
+.ops-panel.show { display: block; }
+.ops-panel .ops-hdr { position: sticky; top: 0; background: #0f172a; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; }
+.ops-panel .ops-hdr span { font-weight: 600; color: var(--primary-light); }
+.ops-panel th { background: #0f172a; color: var(--light); border-bottom-color: #334155; }
+.ops-panel td { border-bottom-color: #334155; padding: 4px 8px; }
+.s2 { color: #4ade80; } .s4 { color: #fbbf24; } .s5 { color: #f87171; }
+
+/* Guided steps */
+.steps { display: flex; gap: 2px; margin-bottom: 1.5rem; }
+.step { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.7rem; background: var(--border); color: var(--muted); border-radius: 4px; }
+.step.done { background: var(--success-bg); color: var(--success); }
+.step.current { background: var(--primary-bg); color: var(--primary); font-weight: 600; }
 </style>
 </head>
 <body>
+
 <div class="header">
   <h1>Banking Service</h1>
-  <div class="user-info" id="userInfo">Not logged in</div>
-</div>
-<div class="layout">
-  <nav class="sidebar" id="sidebar">
-    <a href="#" data-tab="auth" class="active">Auth</a>
-    <a href="#" data-tab="holder">Holder</a>
-    <a href="#" data-tab="accounts">Accounts</a>
-    <a href="#" data-tab="transfers">Transfers</a>
-    <a href="#" data-tab="cards">Cards</a>
-    <a href="#" data-tab="statements">Statements</a>
-  </nav>
-  <div class="main" id="main">
-    <!-- Guided Flow -->
-    <div class="guide" id="guide">
-      <h3>Guided Flow</h3>
-      <ol>
-        <li id="step-1" class="current">1. Signup / Login</li>
-        <li id="step-2">2. Create Holder Profile</li>
-        <li id="step-3">3. Open Account</li>
-        <li id="step-4">4. Make a Transfer</li>
-        <li id="step-5">5. Card Spend</li>
-        <li id="step-6">6. Generate Statement</li>
-      </ol>
-    </div>
-    <div id="alert"></div>
-
-    <!-- Auth Tab -->
-    <div class="tab" id="tab-auth">
-      <div class="card">
-        <h2>Sign Up</h2>
-        <div class="form-group"><label>Email</label><input id="signup-email" type="email" placeholder="user@example.com"></div>
-        <div class="form-group"><label>Password</label><input id="signup-pass" type="password" placeholder="Min 8 chars"></div>
-        <button class="btn btn-primary" onclick="doSignup()">Sign Up</button>
-      </div>
-      <div class="card">
-        <h2>Login</h2>
-        <div class="form-group"><label>Email</label><input id="login-email" type="email"></div>
-        <div class="form-group"><label>Password</label><input id="login-pass" type="password"></div>
-        <button class="btn btn-primary" onclick="doLogin()">Login</button>
-        <button class="btn btn-danger" onclick="doLogout()" id="logoutBtn" style="display:none;margin-left:0.5rem">Logout</button>
-      </div>
-    </div>
-
-    <!-- Holder Tab -->
-    <div class="tab" id="tab-holder" style="display:none">
-      <div class="card">
-        <h2>Create Account Holder</h2>
-        <div class="form-group"><label>First Name</label><input id="h-first"></div>
-        <div class="form-group"><label>Last Name</label><input id="h-last"></div>
-        <div class="form-group"><label>Date of Birth</label><input id="h-dob" type="date"></div>
-        <button class="btn btn-primary" onclick="createHolder()">Create Holder</button>
-      </div>
-      <div id="holderInfo"></div>
-    </div>
-
-    <!-- Accounts Tab -->
-    <div class="tab" id="tab-accounts" style="display:none">
-      <div class="card">
-        <h2>Open Account</h2>
-        <div class="form-group">
-          <label>Type</label>
-          <select id="acct-type"><option value="checking">Checking</option><option value="savings">Savings</option></select>
-        </div>
-        <button class="btn btn-primary" onclick="createAccount()">Create</button>
-      </div>
-      <div class="card"><h2>Your Accounts</h2><table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Balance</th><th>Actions</th></tr></thead><tbody id="acctList"></tbody></table></div>
-    </div>
-
-    <!-- Transfers Tab -->
-    <div class="tab" id="tab-transfers" style="display:none">
-      <div class="card">
-        <h2>New Transfer</h2>
-        <div class="form-group"><label>From Account</label><select id="xfer-src"></select></div>
-        <div class="form-group"><label>To Account</label><select id="xfer-dst"></select></div>
-        <div class="form-group"><label>Amount (cents)</label><input id="xfer-amt" type="number" min="1"></div>
-        <button class="btn btn-primary" onclick="createTransfer()">Transfer</button>
-      </div>
-      <div class="card"><h2>Transfer History</h2><table><thead><tr><th>ID</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr></thead><tbody id="xferList"></tbody></table></div>
-    </div>
-
-    <!-- Cards Tab -->
-    <div class="tab" id="tab-cards" style="display:none">
-      <div class="card">
-        <h2>Issue Card</h2>
-        <div class="form-group"><label>Account</label><select id="card-acct"></select></div>
-        <button class="btn btn-primary" onclick="issueCard()">Issue Card</button>
-      </div>
-      <div class="card">
-        <h2>Card Spend</h2>
-        <div class="form-group"><label>Card</label><select id="spend-card"></select></div>
-        <div class="form-group"><label>Amount (cents)</label><input id="spend-amt" type="number" min="1"></div>
-        <div class="form-group"><label>Merchant</label><input id="spend-merchant"></div>
-        <button class="btn btn-primary" onclick="cardSpend()">Spend</button>
-      </div>
-      <div class="card"><h2>Your Cards</h2><table><thead><tr><th>ID</th><th>Number</th><th>Status</th><th>Expiry</th></tr></thead><tbody id="cardList"></tbody></table></div>
-    </div>
-
-    <!-- Statements Tab -->
-    <div class="tab" id="tab-statements" style="display:none">
-      <div class="card">
-        <h2>Generate Statement</h2>
-        <div class="form-group"><label>Account</label><select id="stmt-acct"></select></div>
-        <div class="form-group"><label>Start Date</label><input id="stmt-start" type="date"></div>
-        <div class="form-group"><label>End Date</label><input id="stmt-end" type="date"></div>
-        <button class="btn btn-primary" onclick="genStatement()">Generate</button>
-      </div>
-      <div id="stmtResult"></div>
-    </div>
+  <div class="user-bar" id="user-bar" style="display:none">
+    <span class="email" id="user-email"></span>
+    <button onclick="toggleOps()">Ops Panel</button>
+    <button onclick="doLogout()">Logout</button>
   </div>
 </div>
 
+<div class="layout">
+<nav class="sidebar" id="sidebar">
+  <div class="nav-label">Getting Started</div>
+  <div class="nav-item active" data-tab="auth" onclick="showTab('auth')">Auth</div>
+  <div class="nav-item disabled" data-tab="profile" onclick="showTab('profile')">Profile</div>
+  <div class="nav-label">Banking</div>
+  <div class="nav-item disabled" data-tab="accounts" onclick="showTab('accounts')">Accounts</div>
+  <div class="nav-item disabled" data-tab="transfers" onclick="showTab('transfers')">Transfers</div>
+  <div class="nav-item disabled" data-tab="cards" onclick="showTab('cards')">Cards</div>
+  <div class="nav-item disabled" data-tab="statements" onclick="showTab('statements')">Statements</div>
+</nav>
+
+<div class="main" id="main-content">
+  <div class="steps" id="guided-steps">
+    <div class="step current" id="step-auth">1. Auth</div>
+    <div class="step" id="step-profile">2. Profile</div>
+    <div class="step" id="step-accounts">3. Accounts</div>
+    <div class="step" id="step-transfers">4. Transfers</div>
+    <div class="step" id="step-cards">5. Cards</div>
+    <div class="step" id="step-statements">6. Statements</div>
+  </div>
+
+  <!-- AUTH -->
+  <div class="section active" id="section-auth">
+    <div class="card">
+      <h2>Sign Up</h2>
+      <div id="signup-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
+        <div class="form-row"><label>Password (8+ chars, upper, number, special)</label><input type="password" id="signup-password" placeholder="StrongPass1!"></div>
+      </div>
+      <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
+    </div>
+    <div class="card">
+      <h2>Log In</h2>
+      <div id="login-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+        <div class="form-row"><label>Password</label><input type="password" id="login-password"></div>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Log In</button>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="section" id="section-profile">
+    <div class="card">
+      <h2>Account Holder Profile</h2>
+      <div id="profile-alert" class="alert"></div>
+      <div id="profile-view" style="display:none;margin-bottom:1rem">
+        <table><tr><td style="width:120px;color:var(--muted)">Name</td><td id="pv-name"></td></tr><tr><td style="color:var(--muted)">Date of Birth</td><td id="pv-dob"></td></tr></table>
+      </div>
+      <div id="profile-form">
+        <div class="form-grid">
+          <div class="form-row"><label>First Name</label><input id="pf-first" placeholder="John"></div>
+          <div class="form-row"><label>Last Name</label><input id="pf-last" placeholder="Doe"></div>
+        </div>
+        <div class="form-row"><label>Date of Birth</label><input type="date" id="pf-dob"></div>
+        <button class="btn btn-primary" onclick="doCreateProfile()">Create Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS -->
+  <div class="section" id="section-accounts">
+    <div class="card">
+      <h2>Your Accounts</h2>
+      <div id="acct-alert" class="alert"></div>
+      <div style="margin-bottom:1rem">
+        <select id="new-acct-type" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius)"><option value="checking">Checking</option><option value="savings">Savings</option></select>
+        <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="doCreateAcct()">Open Account</button>
+      </div>
+      <table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Balance</th><th>Actions</th></tr></thead><tbody id="acct-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- TRANSFERS -->
+  <div class="section" id="section-transfers">
+    <div class="card">
+      <h2>Deposit Funds</h2>
+      <div id="dep-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Account</label><select id="dep-acct"></select></div>
+        <div class="form-row"><label>Amount ($)</label><input type="number" id="dep-amt" step="0.01" min="0.01" placeholder="100.00"></div>
+      </div>
+      <button class="btn btn-success" onclick="doDeposit()">Deposit</button>
+    </div>
+    <div class="card">
+      <h2>Transfer Funds</h2>
+      <div id="xfer-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>From</label><select id="xfer-from"></select></div>
+        <div class="form-row"><label>To</label><select id="xfer-to"></select></div>
+      </div>
+      <div class="form-row"><label>Amount ($)</label><input type="number" id="xfer-amt" step="0.01" min="0.01" placeholder="50.00"></div>
+      <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
+    </div>
+    <div class="card">
+      <h2>Transaction History</h2>
+      <div class="form-row"><label>Account</label><select id="txn-acct" onchange="loadTxns()"></select></div>
+      <table><thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody id="txn-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="section" id="section-cards">
+    <div class="card">
+      <h2>Your Cards</h2>
+      <div id="card-alert" class="alert"></div>
+      <div style="margin-bottom:1rem">
+        <select id="card-acct"></select>
+        <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="doIssueCard()">Issue Card</button>
+      </div>
+      <table><thead><tr><th>Card</th><th>Account</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead><tbody id="card-tbody"></tbody></table>
+    </div>
+    <div class="card">
+      <h2>Card Spend</h2>
+      <div id="spend-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Card</label><select id="spend-card"></select></div>
+        <div class="form-row"><label>Amount ($)</label><input type="number" id="spend-amt" step="0.01" min="0.01" placeholder="25.00"></div>
+      </div>
+      <div class="form-row"><label>Merchant</label><input id="spend-merch" placeholder="Coffee Shop"></div>
+      <button class="btn btn-primary" onclick="doSpend()">Charge Card</button>
+    </div>
+  </div>
+
+  <!-- STATEMENTS -->
+  <div class="section" id="section-statements">
+    <div class="card">
+      <h2>Generate Statement</h2>
+      <div id="stmt-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Account</label><select id="stmt-acct"></select></div>
+        <div class="form-row"><label>Start Date</label><input type="date" id="stmt-start"></div>
+      </div>
+      <div class="form-row"><label>End Date</label><input type="date" id="stmt-end"></div>
+      <button class="btn btn-primary" onclick="doGenStmt()">Generate</button>
+    </div>
+    <div class="card">
+      <h2>Statement History</h2>
+      <table><thead><tr><th>Period</th><th>Opening</th><th>Credits</th><th>Debits</th><th>Closing</th><th>Txns</th></tr></thead><tbody id="stmt-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- Ops Panel -->
-<button class="btn btn-primary ops-toggle" onclick="toggleOps()">Ops View</button>
-<div class="ops-panel" id="opsPanel">
-  <h3 style="margin-bottom:0.5rem">Request Log</h3>
-  <div id="opsLog"></div>
+<div class="ops-panel" id="ops-panel">
+  <div class="ops-hdr"><span>API Request Log (Reviewer/Ops)</span><button class="btn btn-sm" style="color:#e2e8f0;border-color:#475569" onclick="opsLog.length=0;renderOps()">Clear</button></div>
+  <table><thead><tr><th>Time</th><th>Method</th><th>Path</th><th>Status</th><th>Latency</th><th>X-Request-ID</th></tr></thead><tbody id="ops-tbody"></tbody></table>
 </div>
 
 <script>
-let token = null;
-let refreshToken = null;
-const API = '';
+// State
+let accessToken=null, refreshToken=null, currentUser=null, accounts=[], allCards=[];
+const opsLog=[];
 
-function showAlert(msg, type='error') {
-  const el = document.getElementById('alert');
-  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-  setTimeout(() => el.innerHTML = '', 5000);
+// Helpers
+const $=id=>document.getElementById(id);
+const fmt=c=>'$'+(c/100).toFixed(2);
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});
+const badge=s=>`<span class="badge badge-${s}">${s}</span>`;
+
+function alert_(id,msg,type){const e=$(id);e.className=`alert show alert-${type}`;e.textContent=msg;setTimeout(()=>e.classList.remove('show'),5000)}
+
+// API client with ops logging
+async function api(method,path,body){
+  const t0=performance.now();
+  const h={'Content-Type':'application/json'};
+  if(accessToken)h['Authorization']=`Bearer ${accessToken}`;
+  const opts={method,headers:h};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(`/api/v1${path}`,opts);
+  const ms=(performance.now()-t0).toFixed(0);
+  const rid=r.headers.get('x-request-id')||'-';
+  opsLog.unshift({t:new Date().toLocaleTimeString(),method,path:`/api/v1${path}`,status:r.status,ms:ms+'ms',rid});
+  renderOps();
+  const d=r.headers.get('content-type')?.includes('json')?await r.json():null;
+  if(!r.ok){throw new Error(d?.error?.message||d?.detail||JSON.stringify(d))}
+  return{data:d,status:r.status};
 }
 
-function updateGuide(step) {
-  for (let i = 1; i <= 6; i++) {
-    const el = document.getElementById(`step-${i}`);
-    el.className = i < step ? 'done' : i === step ? 'current' : '';
-  }
+// Navigation
+function showTab(t){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $(`section-${t}`).classList.add('active');
+  document.querySelector(`[data-tab="${t}"]`).classList.add('active');
+  if(t==='accounts')loadAccounts();
+  if(t==='transfers'){loadAccounts().then(popSelects)}
+  if(t==='cards'){loadAccounts().then(()=>{popSelects();loadCards()})}
+  if(t==='statements'){loadAccounts().then(()=>{popSelects();loadStmts()})}
+}
+function enableTab(t){document.querySelector(`[data-tab="${t}"]`).classList.remove('disabled')}
+function updateSteps(s){
+  const ss=['auth','profile','accounts','transfers','cards','statements'];
+  const i=ss.indexOf(s);
+  ss.forEach((x,j)=>{$(`step-${x}`).className=j<i?'step done':j===i?'step current':'step'});
 }
 
-async function api(method, path, body=null) {
-  const start = performance.now();
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
-  if (body) opts.body = JSON.stringify(body);
-  const resp = await fetch(API + path, opts);
-  const dur = (performance.now() - start).toFixed(1);
-  const data = await resp.json();
-  const reqId = resp.headers.get('x-request-id') || '-';
-  logOps(method, path, resp.status, dur, reqId);
-  if (!resp.ok && data.error) showAlert(`${data.error.code}: ${data.error.message}`);
-  return { status: resp.status, data };
+// Auth
+async function doSignup(){
+  try{
+    const{data}=await api('POST','/auth/signup',{email:$('signup-email').value,password:$('signup-password').value});
+    alert_('signup-alert',`Account created for ${data.email}! Log in below.`,'success');
+    $('login-email').value=$('signup-email').value;
+  }catch(e){alert_('signup-alert',e.message,'danger')}
+}
+async function doLogin(){
+  try{
+    const{data}=await api('POST','/auth/login',{email:$('login-email').value,password:$('login-password').value});
+    accessToken=data.access_token;refreshToken=data.refresh_token;
+    const me=await api('GET','/auth/me');currentUser=me.data;
+    $('user-email').textContent=me.data.email;$('user-bar').style.display='flex';
+    enableTab('profile');showTab('profile');updateSteps('profile');loadProfile();
+  }catch(e){alert_('login-alert',e.message,'danger')}
+}
+async function doLogout(){
+  try{await api('POST','/auth/logout',{refresh_token:refreshToken})}catch(_){}
+  accessToken=null;refreshToken=null;currentUser=null;
+  $('user-bar').style.display='none';
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.dataset.tab!=='auth')n.classList.add('disabled')});
+  showTab('auth');updateSteps('auth');
 }
 
-function logOps(method, path, status, dur, reqId) {
-  const log = document.getElementById('opsLog');
-  const cls = status < 400 ? 'status-ok' : 'status-err';
-  log.innerHTML = `<div class="ops-entry"><span class="req-id">${reqId.substring(0,8)}</span> ${method} ${path} <span class="${cls}">${status}</span> <span class="latency">${dur}ms</span></div>` + log.innerHTML;
+// Profile
+async function loadProfile(){
+  try{
+    const{data}=await api('GET','/holders/me');
+    $('pv-name').textContent=`${data.first_name} ${data.last_name}`;
+    $('pv-dob').textContent=data.date_of_birth;
+    $('profile-view').style.display='block';$('profile-form').style.display='none';
+    enableTab('accounts');updateSteps('accounts');
+  }catch(_){$('profile-view').style.display='none';$('profile-form').style.display='block'}
+}
+async function doCreateProfile(){
+  try{
+    await api('POST','/holders',{first_name:$('pf-first').value,last_name:$('pf-last').value,date_of_birth:$('pf-dob').value});
+    alert_('profile-alert','Profile created!','success');loadProfile();
+  }catch(e){alert_('profile-alert',e.message,'danger')}
 }
 
-function toggleOps() { document.getElementById('opsPanel').classList.toggle('open'); }
+// Accounts
+async function loadAccounts(){
+  try{const{data}=await api('GET','/accounts');accounts=data;renderAccounts()}catch(_){accounts=[]}
+}
+function renderAccounts(){
+  $('acct-tbody').innerHTML=accounts.map(a=>`<tr>
+    <td style="font-family:monospace;font-size:0.75rem">${a.id.slice(0,8)}...</td>
+    <td>${a.account_type}</td><td>${badge(a.status)}</td>
+    <td class="money ${a.balance_cents>=0?'money-pos':'money-neg'}">${fmt(a.balance_cents)}</td>
+    <td>${a.status==='active'?`<button class="btn btn-outline btn-sm" onclick="chgAcct('${a.id}','frozen')">Freeze</button>`:''}
+    ${a.status==='frozen'?`<button class="btn btn-outline btn-sm" onclick="chgAcct('${a.id}','active')">Activate</button>`:''}
+    ${a.status!=='closed'?`<button class="btn btn-danger btn-sm" onclick="chgAcct('${a.id}','closed')">Close</button>`:''}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No accounts yet</td></tr>';
+  if(accounts.length){enableTab('transfers');enableTab('cards');enableTab('statements')}
+}
+async function doCreateAcct(){
+  try{await api('POST','/accounts',{account_type:$('new-acct-type').value});alert_('acct-alert','Account opened!','success');loadAccounts();updateSteps('transfers')}
+  catch(e){alert_('acct-alert',e.message,'danger')}
+}
+async function chgAcct(id,s){
+  try{await api('PATCH',`/accounts/${id}`,{status:s});loadAccounts()}
+  catch(e){alert_('acct-alert',e.message,'danger')}
+}
 
-// Tab navigation
-document.querySelectorAll('.sidebar a').forEach(a => {
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    document.querySelectorAll('.sidebar a').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-    document.getElementById('tab-' + a.dataset.tab).style.display = 'block';
-  });
+// Populate selects
+function popSelects(){
+  const a=accounts.filter(x=>x.status==='active');
+  const o=a.map(x=>`<option value="${x.id}">${x.account_type} (${fmt(x.balance_cents)})</option>`).join('');
+  ['dep-acct','xfer-from','xfer-to','txn-acct','card-acct','stmt-acct'].forEach(id=>{if($(id))$(id).innerHTML=o});
+}
+
+// Transfers
+async function doDeposit(){
+  try{const c=Math.round(parseFloat($('dep-amt').value)*100);
+    await api('POST',`/accounts/${$('dep-acct').value}/deposit`,{amount_cents:c});
+    alert_('dep-alert',`Deposited ${fmt(c)}!`,'success');$('dep-amt').value='';loadAccounts().then(popSelects);
+  }catch(e){alert_('dep-alert',e.message,'danger')}
+}
+async function doTransfer(){
+  try{const c=Math.round(parseFloat($('xfer-amt').value)*100);
+    await api('POST','/transfers',{source_account_id:$('xfer-from').value,destination_account_id:$('xfer-to').value,amount_cents:c,idempotency_key:uid()});
+    alert_('xfer-alert',`Transferred ${fmt(c)}!`,'success');$('xfer-amt').value='';loadAccounts().then(popSelects);updateSteps('cards');
+  }catch(e){alert_('xfer-alert',e.message,'danger')}
+}
+async function loadTxns(){
+  const id=$('txn-acct').value;if(!id)return;
+  try{const{data}=await api('GET',`/accounts/${id}/transactions`);
+    $('txn-tbody').innerHTML=data.map(t=>`<tr>
+      <td>${badge(t.type)}</td>
+      <td class="money ${['credit','deposit'].includes(t.type)?'money-pos':'money-neg'}">${['credit','deposit'].includes(t.type)?'+':'-'}${fmt(t.amount_cents)}</td>
+      <td>${t.description||'-'}</td>
+      <td style="color:var(--muted)">${new Date(t.created_at).toLocaleString()}</td>
+    </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted)">No transactions</td></tr>';
+  }catch(_){}
+}
+
+// Cards
+async function doIssueCard(){
+  try{await api('POST',`/accounts/${$('card-acct').value}/cards`);alert_('card-alert','Card issued!','success');loadCards()}
+  catch(e){alert_('card-alert',e.message,'danger')}
+}
+async function loadCards(){
+  allCards=[];
+  for(const a of accounts){try{const{data}=await api('GET',`/accounts/${a.id}/cards`);allCards.push(...data)}catch(_){}}
+  renderCards();
+}
+function renderCards(){
+  $('card-tbody').innerHTML=allCards.map(c=>`<tr>
+    <td style="font-family:monospace">****${c.card_number.slice(-4)}</td>
+    <td style="font-size:0.75rem">${c.account_id.slice(0,8)}...</td>
+    <td>${badge(c.status)}</td><td>${c.expiry_date}</td>
+    <td>${c.status==='active'?`<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','blocked')">Block</button>`:''}
+    ${c.status==='blocked'?`<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','active')">Activate</button>`:''}
+    ${c.status!=='cancelled'?`<button class="btn btn-danger btn-sm" onclick="chgCard('${c.id}','cancelled')">Cancel</button>`:''}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No cards</td></tr>';
+  const ac=allCards.filter(c=>c.status==='active');
+  $('spend-card').innerHTML=ac.map(c=>`<option value="${c.id}">****${c.card_number.slice(-4)}</option>`).join('');
+}
+async function chgCard(id,s){try{await api('PATCH',`/cards/${id}`,{status:s});loadCards()}catch(e){alert_('card-alert',e.message,'danger')}}
+async function doSpend(){
+  try{const c=Math.round(parseFloat($('spend-amt').value)*100);
+    await api('POST',`/cards/${$('spend-card').value}/spend`,{amount_cents:c,merchant:$('spend-merch').value,idempotency_key:uid()});
+    alert_('spend-alert',`Charged ${fmt(c)}!`,'success');$('spend-amt').value='';$('spend-merch').value='';
+    loadAccounts().then(popSelects);updateSteps('statements');
+  }catch(e){alert_('spend-alert',e.message,'danger')}
+}
+
+// Statements
+async function doGenStmt(){
+  try{const{data}=await api('POST',`/accounts/${$('stmt-acct').value}/statements`,{start_date:$('stmt-start').value,end_date:$('stmt-end').value});
+    alert_('stmt-alert',`Statement: ${data.transaction_count} transactions`,'success');loadStmts();
+  }catch(e){alert_('stmt-alert',e.message,'danger')}
+}
+async function loadStmts(){
+  const id=$('stmt-acct')?.value;if(!id)return;
+  try{const{data}=await api('GET',`/accounts/${id}/statements`);
+    $('stmt-tbody').innerHTML=data.map(s=>`<tr>
+      <td>${s.start_date} to ${s.end_date}</td>
+      <td class="money">${fmt(s.opening_balance_cents)}</td>
+      <td class="money money-pos">+${fmt(s.total_credits_cents)}</td>
+      <td class="money money-neg">-${fmt(s.total_debits_cents)}</td>
+      <td class="money" style="font-weight:700">${fmt(s.closing_balance_cents)}</td>
+      <td>${s.transaction_count}</td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">No statements</td></tr>';
+  }catch(_){}
+}
+
+// Ops Panel
+function toggleOps(){$('ops-panel').classList.toggle('show')}
+function renderOps(){
+  $('ops-tbody').innerHTML=opsLog.slice(0,50).map(r=>{
+    const c=r.status<300?'s2':r.status<500?'s4':'s5';
+    return`<tr><td>${r.t}</td><td>${r.method}</td><td>${r.path}</td><td class="${c}">${r.status}</td><td>${r.ms}</td><td style="font-size:0.65rem">${r.rid}</td></tr>`;
+  }).join('');
+}
+
+// Init date defaults
+window.addEventListener('DOMContentLoaded',()=>{
+  const today=new Date().toISOString().split('T')[0];
+  const ago=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+  if($('stmt-end'))$('stmt-end').value=today;
+  if($('stmt-start'))$('stmt-start').value=ago;
 });
-
-async function doSignup() {
-  const { status } = await api('POST', '/api/v1/auth/signup', {
-    email: document.getElementById('signup-email').value,
-    password: document.getElementById('signup-pass').value,
-  });
-  if (status === 201) showAlert('Account created! Now login.', 'success');
-}
-
-async function doLogin() {
-  const { status, data } = await api('POST', '/api/v1/auth/login', {
-    email: document.getElementById('login-email').value,
-    password: document.getElementById('login-pass').value,
-  });
-  if (status === 200) {
-    token = data.access_token;
-    refreshToken = data.refresh_token;
-    document.getElementById('userInfo').textContent = document.getElementById('login-email').value;
-    document.getElementById('logoutBtn').style.display = 'inline';
-    showAlert('Logged in!', 'success');
-    updateGuide(2);
-  }
-}
-
-async function doLogout() {
-  if (refreshToken) await api('POST', '/api/v1/auth/logout', { refresh_token: refreshToken });
-  token = null; refreshToken = null;
-  document.getElementById('userInfo').textContent = 'Not logged in';
-  document.getElementById('logoutBtn').style.display = 'none';
-  updateGuide(1);
-}
-
-async function createHolder() {
-  const { status } = await api('POST', '/api/v1/holders', {
-    first_name: document.getElementById('h-first').value,
-    last_name: document.getElementById('h-last').value,
-    date_of_birth: document.getElementById('h-dob').value,
-  });
-  if (status === 201) { showAlert('Holder created!', 'success'); updateGuide(3); }
-}
-
-async function createAccount() {
-  const { status } = await api('POST', '/api/v1/accounts', { account_type: document.getElementById('acct-type').value });
-  if (status === 201) { showAlert('Account created!', 'success'); loadAccounts(); updateGuide(4); }
-}
-
-async function loadAccounts() {
-  const { data } = await api('GET', '/api/v1/accounts');
-  if (!Array.isArray(data)) return;
-  const tbody = document.getElementById('acctList');
-  tbody.innerHTML = data.map(a => `<tr><td>${a.id.substring(0,8)}</td><td>${a.account_type}</td><td><span class="badge badge-${a.status==='active'?'success':a.status==='frozen'?'warn':'danger'}">${a.status}</span></td><td>$${(a.balance_cents/100).toFixed(2)}</td><td><button class="btn btn-primary" onclick="depositPrompt('${a.id}')" style="font-size:0.7rem">Deposit</button></td></tr>`).join('');
-  // Update selects
-  const opts = data.map(a => `<option value="${a.id}">${a.account_type} (${a.id.substring(0,8)}) $${(a.balance_cents/100).toFixed(2)}</option>`).join('');
-  ['xfer-src','xfer-dst','card-acct','stmt-acct'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = opts; });
-}
-
-async function depositPrompt(acctId) {
-  const amt = prompt('Deposit amount in cents:');
-  if (!amt) return;
-  const { status } = await api('POST', `/api/v1/accounts/${acctId}/deposit`, { amount_cents: parseInt(amt) });
-  if (status === 200) { showAlert('Deposited!', 'success'); loadAccounts(); }
-}
-
-async function createTransfer() {
-  const { status } = await api('POST', '/api/v1/transfers', {
-    source_account_id: document.getElementById('xfer-src').value,
-    destination_account_id: document.getElementById('xfer-dst').value,
-    amount_cents: parseInt(document.getElementById('xfer-amt').value),
-    idempotency_key: crypto.randomUUID(),
-  });
-  if (status === 201) { showAlert('Transfer completed!', 'success'); loadTransfers(); loadAccounts(); updateGuide(5); }
-}
-
-async function loadTransfers() {
-  const { data } = await api('GET', '/api/v1/transfers');
-  if (!Array.isArray(data)) return;
-  document.getElementById('xferList').innerHTML = data.map(t => `<tr><td>${t.id.substring(0,8)}</td><td>${t.source_account_id.substring(0,8)}</td><td>${t.destination_account_id.substring(0,8)}</td><td>$${(t.amount_cents/100).toFixed(2)}</td><td><span class="badge badge-success">${t.status}</span></td></tr>`).join('');
-}
-
-async function issueCard() {
-  const { status } = await api('POST', `/api/v1/accounts/${document.getElementById('card-acct').value}/cards`);
-  if (status === 201) { showAlert('Card issued!', 'success'); loadCards(); }
-}
-
-async function loadCards() {
-  const { data } = await api('GET', '/api/v1/accounts');
-  if (!Array.isArray(data)) return;
-  let allCards = [];
-  for (const a of data) {
-    const r = await api('GET', `/api/v1/accounts/${a.id}/cards`);
-    if (Array.isArray(r.data)) allCards.push(...r.data);
-  }
-  document.getElementById('cardList').innerHTML = allCards.map(c => `<tr><td>${c.id.substring(0,8)}</td><td>${c.card_number}</td><td><span class="badge badge-${c.status==='active'?'success':'danger'}">${c.status}</span></td><td>${c.expiry_date}</td></tr>`).join('');
-  document.getElementById('spend-card').innerHTML = allCards.map(c => `<option value="${c.id}">${c.card_number} (${c.status})</option>`).join('');
-}
-
-async function cardSpend() {
-  const { status } = await api('POST', `/api/v1/cards/${document.getElementById('spend-card').value}/spend`, {
-    amount_cents: parseInt(document.getElementById('spend-amt').value),
-    merchant: document.getElementById('spend-merchant').value,
-    idempotency_key: crypto.randomUUID(),
-  });
-  if (status === 201) { showAlert('Card spend recorded!', 'success'); loadAccounts(); updateGuide(6); }
-}
-
-async function genStatement() {
-  const acctId = document.getElementById('stmt-acct').value;
-  const { status, data } = await api('POST', `/api/v1/accounts/${acctId}/statements`, {
-    start_date: document.getElementById('stmt-start').value,
-    end_date: document.getElementById('stmt-end').value,
-  });
-  if (status === 201) {
-    document.getElementById('stmtResult').innerHTML = `<div class="card"><h2>Statement</h2><table>
-      <tr><th>Period</th><td>${data.start_date} — ${data.end_date}</td></tr>
-      <tr><th>Opening Balance</th><td>$${(data.opening_balance_cents/100).toFixed(2)}</td></tr>
-      <tr><th>Total Credits</th><td>$${(data.total_credits_cents/100).toFixed(2)}</td></tr>
-      <tr><th>Total Debits</th><td>$${(data.total_debits_cents/100).toFixed(2)}</td></tr>
-      <tr><th>Closing Balance</th><td>$${(data.closing_balance_cents/100).toFixed(2)}</td></tr>
-      <tr><th>Transactions</th><td>${data.transaction_count}</td></tr>
-    </table></div>`;
-    showAlert('Statement generated!', 'success');
-  }
-}
 </script>
 </body>
 </html>
