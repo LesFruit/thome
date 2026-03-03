@@ -10,7 +10,7 @@ from app.database import init_db, dispose_db
 from app.logging_config import setup_logging
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.error_handler import register_error_handlers
-from app.routers import health, auth, holders, accounts, transfers
+from app.routers import health, auth, holders, accounts, transfers, cards
 
 logger = logging.getLogger(__name__)
 
@@ -46,3 +46,4 @@ app.include_router(auth.router)
 app.include_router(holders.router)
 app.include_router(accounts.router)
 app.include_router(transfers.router)
+app.include_router(cards.router)
