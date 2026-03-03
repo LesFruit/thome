@@ -137,6 +137,22 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 
 **Tests:** 70 pass. **Covers:** 4.12–4.15 complete.
 
+### Session 12: Frontend Dashboard + E2E Tests (2026-03-03)
+
+**Commits:** `5923d18` (Playwright tests), `6d6d401` (seed data), `99141fd` (frontend + E2E)
+
+- Comprehensive frontend dashboard rewrite: 6-tab SPA (Auth, Profile, Accounts, Transfers, Cards, Statements)
+- Guided flow rail (6 steps with done/current/pending states)
+- Ops/Reviewer panel showing live API request log (method, path, status, latency, X-Request-ID)
+- Token stored in memory only (not localStorage), UUID idempotency keys auto-generated
+- 5 Playwright E2E tests: dashboard loads, signup flow, login flow, health from browser, ready from browser
+- Seed data script (`scripts/seed_data.py`) for demo environment setup
+- Used Claude Code experimental agent teams for parallel frontend development
+
+**Iteration:** Initial Playwright tests used generic locators; refined to match actual dashboard HTML structure. SQLite multiprocess threading required isolated `test_e2e.db` with separate server process.
+
+**Tests:** 75 total (70 API + 5 E2E), 94% coverage. **Covers:** 4.10 (enhanced), 4.13 (E2E), 12.1 Playwright gate now passing.
+
 ## Challenges and Manual Interventions
 
 | Challenge | Resolution | Manual Decision |
@@ -150,14 +166,15 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 70 |
-| Test files | 8 |
+| Total tests | 75 (70 API + 5 E2E) |
+| Test files | 10 |
 | Coverage | 94% (80% minimum) |
 | TDD cycles (red→green) | 8 |
-| Commits | 13 |
+| Commits | 16 |
 | Lines of app code | ~1200 |
-| Lines of test code | ~900 |
+| Lines of test code | ~1100 |
 | SLO targets met | 5/5 |
 | Security checklist items | 10/10 |
+| Release gates passed | 10/10 |
 | Traceability rows complete | 12/12 |
 | Zero regressions | Verified after every commit |

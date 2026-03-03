@@ -1,7 +1,6 @@
 """TDD tests for structured logging, sanitization, and error tracking."""
 
 import json
-import io
 import logging
 
 
@@ -10,7 +9,7 @@ def test_json_log_format(client, capsys):
     # Trigger a request that produces logs
     client.get("/health")
     # We can at least verify the logger setup works
-    from app.logging_config import setup_logging, JSONFormatter
+    from app.logging_config import JSONFormatter
     formatter = JSONFormatter()
     record = logging.LogRecord(
         name="test", level=logging.INFO, pathname="", lineno=0,

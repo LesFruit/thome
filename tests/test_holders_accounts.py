@@ -1,6 +1,5 @@
 """TDD tests for account holders and accounts."""
 
-import pytest
 
 
 def _signup_and_login(client, email="holder@example.com"):

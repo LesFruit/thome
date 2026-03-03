@@ -25,6 +25,8 @@
 | D-019 | Test Stress | `tests/test_stress.py` | Concurrency/stress tests (6) | Test | 2026-03-03 |
 | D-020 | CI Pipeline | `.github/workflows/validate.yml` | Lint, test, docker smoke | Platform | 2026-03-03 |
 | D-021 | SLO Benchmark | `scripts/benchmark.py` | Latency measurement script | Platform | 2026-03-03 |
+| D-022 | Playwright E2E | `tests/test_playwright.py` | Browser E2E tests (5) | Test | 2026-03-03 |
+| D-023 | Seed Data | `scripts/seed_data.py` | Demo environment seeder | Test | 2026-03-03 |
 
 ## Relationship Edges
 
@@ -44,6 +46,8 @@
 | D-019 | D-001 §5 | verified_by |
 | D-020 | D-001 §4.12 | verified_by |
 | D-021 | D-001 §13 | verified_by |
+| D-022 | D-001 §4.13 | verified_by |
+| D-023 | D-001 §10 | verified_by |
 
 ## Retrieval Tags
 
@@ -52,7 +56,7 @@
 | `feature` | D-001, D-002 |
 | `setup` | D-002, D-005, D-007, D-008 |
 | `ai_evidence` | D-003 |
-| `test_scope` | D-009–D-019 |
+| `test_scope` | D-009–D-019, D-022 |
 | `ops_area` | D-005, D-007, D-008, D-016 |
 | `layer:auth` | D-011 |
 | `layer:domain` | D-012, D-013, D-014, D-015 |
@@ -61,6 +65,7 @@
 | `risk:security` | D-011, D-016 |
 | `ci_pipeline` | D-020 |
 | `slo_evidence` | D-021 |
+| `layer:e2e` | D-017, D-022, D-023 |
 
 ## Start Here
 

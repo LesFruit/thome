@@ -620,20 +620,20 @@ This is the canonical release gate list. Do not maintain a separate mirror docum
 - [x] formatting applied/clean — `ruff format --check` clean
 - [x] API suite passes (unit/integration/e2e) — 70 tests, 94% coverage
 - [x] stress/concurrency suite passes — 6 stress tests (overdraft, idempotency, ledger)
-- [ ] Playwright suite passes — browser E2E not implemented (bonus item)
+- [x] Playwright suite passes — 5 E2E tests (dashboard load, signup, login, health, ready) (commit `99141fd`)
 - [x] docker build + compose smoke checks pass — Dockerfile + docker-compose.yml present, CI validates
 - [x] security validation checklist executed — section 9 fully checked
-- [x] RAG index and docs refreshed — `docs/INDEX.md` with 18 document nodes
+- [x] RAG index and docs refreshed — `docs/INDEX.md` with 23 document nodes
 - [x] demo evidence bundle updated — section 10 filled with test references
 - [x] SLO/SLI snapshot recorded — section 13 trend table filled
 
 ### 12.2 Release Record
 - Release version/tag: v0.1.0
-- Commit hash: `58c4cc2`
+- Commit hash: `99141fd`
 - Date: 2026-03-03
 - Release owner: AI Agent (Claude Opus 4.6)
 - Approvers: Human reviewer (pending)
-- Risks/notes: Playwright E2E not implemented (bonus). SQLite concurrent writes limited by threading model (WAL + busy_timeout mitigate).
+- Risks/notes: SQLite concurrent writes limited by threading model (WAL + busy_timeout mitigate). All 10/10 required gates passed.
 
 Acceptance criteria:
 - No release proceeds with unchecked required gates.

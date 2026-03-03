@@ -1,6 +1,5 @@
 """TDD tests for auth: signup, login, refresh, logout, token protection."""
 
-import pytest
 
 
 # --- Signup ---
