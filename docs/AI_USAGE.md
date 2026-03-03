@@ -177,10 +177,8 @@ This commit — Exhaustive edge-case sweep covering every remaining untested cod
 ## Logs
 
 Test execution logs are saved in `docs/logs/`:
-- `api-tests.log` — 70 API tests with coverage report (94%)
+- `api-tests-225.log` — 225 API tests with coverage report (95.70%)
 - `e2e-tests.log` — 2 Playwright E2E story tests
 - `backend-e2e-story.log` — 13-step backend flow (signup→logout)
 - `lint-report.log` — Ruff lint (all checks passed)
 - `browser-audit.md` — 71-test BrowserOS manual audit (1 bug fixed, 2 design findings)
-- `api-tests-158.log` — 158 API tests with coverage report (95%)
-- `api-tests-225.log` — 225 API tests with coverage report (95.70%)

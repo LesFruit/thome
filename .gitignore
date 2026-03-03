@@ -49,3 +49,9 @@ Thumbs.db
 
 # UV
 .uv/
+
+# Ruff
+.ruff_cache/
+
+# Claude Code
+.claude/
