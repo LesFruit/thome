@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /home/codex/.cache/uv/builds-v0/.tmpv8uqJR/bin/python
+cachedir: .pytest_cache
+rootdir: /home/codex/projects/thome
+configfile: pyproject.toml
+plugins: anyio-4.12.1
+collecting ... collected 3 items
+
+tests/test_playwright.py::test_01_new_customer_journey PASSED            [ 33%]
+tests/test_playwright.py::test_02_returning_customer PASSED              [ 66%]
+tests/test_playwright.py::test_03_api_components PASSED                  [100%]
+
+========================= 3 passed in 97.24s (0:01:37) =========================

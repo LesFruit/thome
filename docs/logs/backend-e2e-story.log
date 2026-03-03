@@ -1,0 +1,20 @@
+Installed 7 packages in 16ms
+[OK] Health: {'status': 'healthy'}
+[OK] Ready: {'status': 'ready'}
+[OK] Signup: demo-ed974ac9@test.com
+[OK] Login: got tokens
+[OK] Auth/me: demo-ed974ac9@test.com
+[OK] Holder created: 5fc1b0d7
+[OK] Accounts: checking=9ef2a8d8, savings=98dfc0b2
+[OK] Deposited $1000 into checking
+[OK] Transfer: $250 checking→savings
+[OK] Balances: checking=$750, savings=$250
+[OK] Card issued: 4421568497301433
+[OK] Card spend: $50 at Demo Coffee Shop
+[OK] Statement: 3 txns, closing=$700.00
+[OK] Token refresh: new tokens issued
+[OK] Logout: refresh token revoked
+
+==================================================
+FULL E2E FLOW PASSED — all 13 steps completed
+==================================================

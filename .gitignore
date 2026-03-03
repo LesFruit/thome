@@ -45,6 +45,7 @@ Thumbs.db
 
 # Logs
 *.log
+!docs/logs/*.log
 
 # UV
 .uv/
