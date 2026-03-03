@@ -1,6 +1,7 @@
 """Pydantic schemas for holders and accounts."""
 
 from datetime import date, datetime
+from enum import StrEnum
 
 from pydantic import BaseModel
 
@@ -28,12 +29,23 @@ class HolderResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AccountType(StrEnum):
+    checking = "checking"
+    savings = "savings"
+
+
+class AccountStatus(StrEnum):
+    active = "active"
+    frozen = "frozen"
+    closed = "closed"
+
+
 class AccountCreateRequest(BaseModel):
-    account_type: str  # checking, savings
+    account_type: AccountType
 
 
 class AccountUpdateRequest(BaseModel):
-    status: str  # active, frozen, closed
+    status: AccountStatus
 
 
 class AccountResponse(BaseModel):
