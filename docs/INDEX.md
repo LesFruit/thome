@@ -34,6 +34,7 @@
 | D-028 | Browser Audit | `docs/logs/browser-audit.md` | 71-test BrowserOS manual audit (1 bug, 2 findings) |
 | D-029 | E2E Scenarios | `tests/test_e2e_scenarios.py` | 58 E2E scenario tests (schema, state machines, isolation, ledger) |
 | D-030 | Backend Audit | `tests/test_backend_audit.py` | 36 backend audit tests (card/account edge cases, auth lifecycle) |
+| D-031 | Final Audit | `tests/test_final_audit.py` | 61 comprehensive edge-case tests (0 bugs, full coverage sweep) |
 
 ## Relationship Edges
 
@@ -58,17 +59,18 @@
 | D-028 | D-001 §4.10 | verified_by |
 | D-029 | D-001 §4.3,§4.5 | verified_by |
 | D-030 | D-001 §4.3,§4.5 | verified_by |
+| D-031 | D-001 §4.2–§4.6 | verified_by |
 
 ## Retrieval Tags
 
 | Tag | Documents |
 |-----|-----------|
-| `test_scope` | D-009–D-019, D-022, D-029, D-030 |
+| `test_scope` | D-009–D-019, D-022, D-029, D-030, D-031 |
 | `layer:auth` | D-011 |
 | `layer:domain` | D-012, D-013, D-014, D-015 |
 | `layer:platform` | D-009, D-010, D-020 |
 | `layer:e2e` | D-017, D-022, D-025, D-026, D-027 |
-| `risk:financial` | D-013, D-014, D-019, D-029, D-030 |
+| `risk:financial` | D-013, D-014, D-019, D-029, D-030, D-031 |
 | `risk:security` | D-011, D-016 |
 | `ai_evidence` | D-003, D-025 |
 | `video_evidence` | D-026, D-027 |
