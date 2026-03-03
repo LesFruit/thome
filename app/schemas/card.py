@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class CardResponse(BaseModel):
@@ -24,6 +24,13 @@ class CardSpendRequest(BaseModel):
     amount_cents: int
     merchant: str
     idempotency_key: str
+
+    @field_validator("merchant")
+    @classmethod
+    def merchant_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Merchant name is required")
+        return v
 
 
 class CardTransactionResponse(BaseModel):

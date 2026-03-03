@@ -98,6 +98,9 @@ Covers: 4.10 (bugs fixed), 4.13 (story-driven E2E).
 | E2E videos were repetitive | 2 story-driven flows instead of 34 isolated tests |
 | Deposit accepted on frozen/closed accounts | Added account status check to `deposit()` |
 | Account closed with non-zero balance | Added balance-zero guard before close transition |
+| `account_type` accepted any string | Added `AccountType(StrEnum)` to schema |
+| Card issued on frozen/closed account | Added `account.status != "active"` guard to `issue_card()` |
+| Empty merchant accepted on card spend | Added `@field_validator("merchant")` to `CardSpendRequest` |
 
 ### Session 15: Automated Browser Audit → Backend Bug Discovery
 `6d2d042` — 71-test automated browser audit via BrowserOS (Chrome MCP). Drove the frontend through every edge case systematically: auth (8), user journey (18), deposits (4), transfers (7), cards (12), account states (8), cross-user isolation (6), UI/UX (8).
@@ -111,19 +114,38 @@ Covers: 4.10 (bugs fixed), 4.13 (story-driven E2E).
 **70 API tests pass, 94% coverage after fixes.**
 Covers: 4.3 (account bugs), 4.10 (UI verification).
 
+### Session 16: Schema Validation + Large-Scale Backend Audit
+`14b2d87` (schema fix + E2E), this commit (backend audit) — Two-phase audit:
+
+**Phase 1 — Browser API audit (128/129 endpoints pass):**
+Systematically hit all 27 API endpoints via BrowserOS JavaScript execution. Found 1 bug: `account_type: "investment"` accepted (HTTP 201 instead of 422). Root cause: `AccountCreateRequest.account_type` was plain `str` with no enum constraint. Fixed with `AccountType(StrEnum)` and `AccountStatus(StrEnum)` in `app/schemas/account.py`. Wrote 58 E2E scenario tests.
+
+**Phase 2 — Pure backend audit (36 tests, 3 more bugs):**
+Deep code analysis of all 5 service files, 5 model files, 6 router files to find every untested branch. Created `tests/test_backend_audit.py` with 36 tests across 13 classes. Found and fixed:
+
+1. **Card issued on frozen account (201→400)** — `issue_card()` checked ownership but not account status. Fixed: added `if account.status != "active"` guard in `card_service.py`.
+2. **Card issued on closed account (201→400)** — same root cause and fix as above.
+3. **Empty merchant accepted on card spend (201→422)** — no validation at schema or service level. Fixed: `@field_validator("merchant")` in `CardSpendRequest` rejects whitespace-only strings.
+
+**Pattern:** Same class of bug as Session 15 (missing status checks at service boundaries). Browser + backend audit combo catches gaps that isolated unit tests miss.
+
+**158 tests (94 API + 58 E2E + 6 stress), 95% coverage.** All lint clean.
+Covers: 4.3, 4.4, 4.5 (bugs fixed), 4.13 (E2E scenarios).
+
 ## Evidence
 
 | Metric | Value |
 |--------|-------|
-| API tests | 70 |
-| E2E tests | 2 stories (40+ assertions) |
-| Coverage | 94% (80% minimum) |
+| API tests | 158 (94 API + 58 E2E + 6 stress) |
+| E2E tests | 2 Playwright stories (40+ assertions) |
+| Coverage | 95% (80% minimum) |
 | TDD cycles | 8 red→green |
 | Commits | 20+ |
 | SLO targets met | 5/5 |
 | Security checklist | 10/10 |
 | Release gates | 10/10 |
-| Browser audit | 71 tests (69 pass, 1 bug fixed, 2 findings) |
+| Browser audit | 128/129 endpoints pass (1 schema bug fixed) |
+| Backend audit | 36 tests (3 bugs fixed) |
 | Traceability rows | 12/12 |
 
 ## Logs
@@ -134,3 +156,4 @@ Test execution logs are saved in `docs/logs/`:
 - `backend-e2e-story.log` — 13-step backend flow (signup→logout)
 - `lint-report.log` — Ruff lint (all checks passed)
 - `browser-audit.md` — 71-test BrowserOS manual audit (1 bug fixed, 2 design findings)
+- `api-tests-158.log` — 158 API tests with coverage report (95%)

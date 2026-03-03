@@ -1,0 +1,224 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /home/codex/.cache/uv/builds-v0/.tmpknFOjr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/codex/projects/thome
+configfile: pyproject.toml
+plugins: cov-7.0.0, anyio-4.12.1
+collecting ... collected 167 items
+
+tests/test_auth.py::test_signup_success PASSED                           [  0%]
+tests/test_auth.py::test_signup_duplicate_email PASSED                   [  1%]
+tests/test_auth.py::test_signup_weak_password PASSED                     [  1%]
+tests/test_auth.py::test_login_success PASSED                            [  2%]
+tests/test_auth.py::test_login_wrong_password PASSED                     [  2%]
+tests/test_auth.py::test_login_nonexistent_user PASSED                   [  3%]
+tests/test_auth.py::test_protected_route_without_token PASSED            [  4%]
+tests/test_auth.py::test_protected_route_with_valid_token PASSED         [  4%]
+tests/test_auth.py::test_protected_route_with_invalid_token PASSED       [  5%]
+tests/test_auth.py::test_refresh_returns_new_tokens PASSED               [  5%]
+tests/test_auth.py::test_refresh_old_token_rejected_after_rotation PASSED [  6%]
+tests/test_auth.py::test_logout_revokes_refresh_token PASSED             [  7%]
+tests/test_backend_audit.py::TestStatementEdgeCases::test_statement_reversed_dates PASSED [  7%]
+tests/test_backend_audit.py::TestStatementEdgeCases::test_statement_same_day_range PASSED [  8%]
+tests/test_backend_audit.py::TestStatementEdgeCases::test_statement_multiple_operations_math PASSED [  8%]
+tests/test_backend_audit.py::TestStatementEdgeCases::test_statement_nonexistent_account PASSED [  9%]
+tests/test_backend_audit.py::TestStatementEdgeCases::test_list_statements_empty PASSED [ 10%]
+tests/test_backend_audit.py::TestHolderValidation::test_update_holder_partial_fields PASSED [ 10%]
+tests/test_backend_audit.py::TestHolderValidation::test_update_holder_all_fields PASSED [ 11%]
+tests/test_backend_audit.py::TestHolderValidation::test_get_holder_before_creation PASSED [ 11%]
+tests/test_backend_audit.py::TestHolderValidation::test_create_account_without_holder PASSED [ 12%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_issue_card_on_closed_account_rejected PASSED [ 13%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_issue_card_on_frozen_account_rejected PASSED [ 13%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_multiple_cards_independent_spend PASSED [ 14%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_card_spend_empty_merchant_rejected PASSED [ 14%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_card_not_found PASSED [ 15%]
+tests/test_backend_audit.py::TestCardAccountInteraction::test_card_spend_on_nonexistent_card PASSED [ 16%]
+tests/test_backend_audit.py::TestAuthLifecycle::test_double_logout_idempotent PASSED [ 16%]
+tests/test_backend_audit.py::TestAuthLifecycle::test_refresh_chain PASSED [ 17%]
+tests/test_backend_audit.py::TestAuthLifecycle::test_multiple_logins_independent_sessions PASSED [ 17%]
+tests/test_backend_audit.py::TestAuthLifecycle::test_signup_case_sensitivity PASSED [ 18%]
+tests/test_backend_audit.py::TestTransferConservation::test_total_money_conserved_after_transfers PASSED [ 19%]
+tests/test_backend_audit.py::TestTransferConservation::test_failed_transfer_doesnt_change_balances PASSED [ 19%]
+tests/test_backend_audit.py::TestFrozenClosedBalance::test_frozen_with_balance_cannot_close PASSED [ 20%]
+tests/test_backend_audit.py::TestFrozenClosedBalance::test_unfreeze_drain_close_lifecycle PASSED [ 20%]
+tests/test_backend_audit.py::TestDepositLedger::test_deposit_creates_deposit_transaction PASSED [ 21%]
+tests/test_backend_audit.py::TestDepositLedger::test_multiple_deposits_accumulate PASSED [ 22%]
+tests/test_backend_audit.py::TestCardSpendIdempotency::test_same_key_different_cards_returns_first PASSED [ 22%]
+tests/test_backend_audit.py::TestTransferStatementIntegration::test_receiving_account_statement PASSED [ 23%]
+tests/test_backend_audit.py::TestRapidSequential::test_rapid_deposits_and_withdrawals PASSED [ 23%]
+tests/test_backend_audit.py::TestRapidSequential::test_rapid_card_spends PASSED [ 24%]
+tests/test_backend_audit.py::TestErrorEnvelopes::test_400_has_error_envelope PASSED [ 25%]
+tests/test_backend_audit.py::TestErrorEnvelopes::test_401_has_error_envelope PASSED [ 25%]
+tests/test_backend_audit.py::TestErrorEnvelopes::test_403_has_error_envelope PASSED [ 26%]
+tests/test_backend_audit.py::TestErrorEnvelopes::test_404_has_error_envelope PASSED [ 26%]
+tests/test_backend_audit.py::TestErrorEnvelopes::test_422_has_error_envelope PASSED [ 27%]
+tests/test_backend_audit.py::TestCrossUserTransferVerification::test_cross_user_transfer_ledger_both_sides PASSED [ 28%]
+tests/test_backend_audit.py::TestRequestIdCoverage::test_all_response_types_have_request_id PASSED [ 28%]
+tests/test_cards.py::test_issue_card PASSED                              [ 29%]
+tests/test_cards.py::test_list_cards PASSED                              [ 29%]
+tests/test_cards.py::test_get_card PASSED                                [ 30%]
+tests/test_cards.py::test_block_card PASSED                              [ 31%]
+tests/test_cards.py::test_cancel_card PASSED                             [ 31%]
+tests/test_cards.py::test_card_spend_success PASSED                      [ 32%]
+tests/test_cards.py::test_card_spend_updates_balance PASSED              [ 32%]
+tests/test_cards.py::test_card_spend_blocked_card PASSED                 [ 33%]
+tests/test_cards.py::test_card_spend_cancelled_card PASSED               [ 34%]
+tests/test_cards.py::test_card_spend_frozen_account PASSED               [ 34%]
+tests/test_cards.py::test_card_spend_idempotency PASSED                  [ 35%]
+tests/test_cards.py::test_card_spend_cross_user_denied PASSED            [ 35%]
+tests/test_e2e_scenarios.py::TestSchemaValidation::test_invalid_account_type_rejected PASSED [ 36%]
+tests/test_e2e_scenarios.py::TestSchemaValidation::test_valid_account_types_accepted PASSED [ 37%]
+tests/test_e2e_scenarios.py::TestSchemaValidation::test_invalid_account_status_rejected PASSED [ 37%]
+tests/test_e2e_scenarios.py::TestSchemaValidation::test_missing_required_fields PASSED [ 38%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_deposit_to_frozen_account_rejected PASSED [ 38%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_deposit_to_closed_account_rejected PASSED [ 39%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_close_account_with_balance_rejected PASSED [ 40%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_close_account_with_zero_balance_succeeds PASSED [ 40%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_transfer_from_frozen_rejected PASSED [ 41%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_transfer_to_frozen_rejected PASSED [ 41%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_transfer_to_closed_rejected PASSED [ 42%]
+tests/test_e2e_scenarios.py::TestAccountStatusGuards::test_card_spend_on_frozen_account_rejected PASSED [ 43%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_active_to_frozen PASSED [ 43%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_active_to_closed PASSED [ 44%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_frozen_to_active PASSED [ 44%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_frozen_to_closed PASSED [ 45%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_closed_to_active_rejected PASSED [ 46%]
+tests/test_e2e_scenarios.py::TestAccountStateMachine::test_closed_to_frozen_rejected PASSED [ 46%]
+tests/test_e2e_scenarios.py::TestCardStateMachine::test_block_then_unblock_then_spend PASSED [ 47%]
+tests/test_e2e_scenarios.py::TestCardStateMachine::test_cancel_is_terminal PASSED [ 47%]
+tests/test_e2e_scenarios.py::TestCardStateMachine::test_blocked_to_cancelled PASSED [ 48%]
+tests/test_e2e_scenarios.py::TestCardStateMachine::test_card_spend_creates_transaction_record PASSED [ 49%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_get_account_denied PASSED [ 49%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_deposit_denied PASSED [ 50%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_transfer_from_other_user_denied PASSED [ 50%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_get_card_denied PASSED [ 51%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_card_spend_denied PASSED [ 52%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_card_status_update_denied PASSED [ 52%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_list_cards_denied PASSED [ 53%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_transactions_denied PASSED [ 53%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_statement_create_denied PASSED [ 54%]
+tests/test_e2e_scenarios.py::TestCrossUserIsolation::test_account_status_update_denied PASSED [ 55%]
+tests/test_e2e_scenarios.py::TestCrossUserTransfer::test_transfer_to_other_user_succeeds PASSED [ 55%]
+tests/test_e2e_scenarios.py::TestLedgerInvariant::test_transfer_creates_paired_entries PASSED [ 56%]
+tests/test_e2e_scenarios.py::TestLedgerInvariant::test_balance_matches_ledger_sum PASSED [ 56%]
+tests/test_e2e_scenarios.py::TestStatementCorrectness::test_statement_math_with_mixed_operations PASSED [ 57%]
+tests/test_e2e_scenarios.py::TestStatementCorrectness::test_statement_on_closed_account PASSED [ 58%]
+tests/test_e2e_scenarios.py::TestStatementCorrectness::test_statement_empty_period PASSED [ 58%]
+tests/test_e2e_scenarios.py::TestTokenLifecycle::test_refresh_rotation_invalidates_old_token PASSED [ 59%]
+tests/test_e2e_scenarios.py::TestTokenLifecycle::test_logout_revokes_refresh PASSED [ 59%]
+tests/test_e2e_scenarios.py::TestTokenLifecycle::test_login_after_logout PASSED [ 60%]
+tests/test_e2e_scenarios.py::TestIdempotency::test_transfer_idempotency_no_double_debit PASSED [ 61%]
+tests/test_e2e_scenarios.py::TestIdempotency::test_card_spend_idempotency_no_double_charge PASSED [ 61%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_deposit_zero_rejected PASSED [ 62%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_deposit_negative_rejected PASSED [ 62%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_transfer_nonexistent_destination PASSED [ 63%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_deposit_nonexistent_account PASSED [ 64%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_card_spend_overdraft_rejected PASSED [ 64%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_transfer_exact_balance_succeeds PASSED [ 65%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_card_spend_exact_balance_succeeds PASSED [ 65%]
+tests/test_e2e_scenarios.py::TestEdgeCases::test_card_spend_one_cent_over_rejected PASSED [ 66%]
+tests/test_e2e_scenarios.py::TestMiddleware::test_request_id_on_success PASSED [ 67%]
+tests/test_e2e_scenarios.py::TestMiddleware::test_request_id_on_error PASSED [ 67%]
+tests/test_e2e_scenarios.py::TestMiddleware::test_error_envelope_format PASSED [ 68%]
+tests/test_e2e_scenarios.py::TestMiddleware::test_request_id_echo PASSED [ 68%]
+tests/test_e2e_scenarios.py::TestAuthEdgeCases::test_signup_empty_email PASSED [ 69%]
+tests/test_e2e_scenarios.py::TestAuthEdgeCases::test_signup_password_exactly_8_chars PASSED [ 70%]
+tests/test_e2e_scenarios.py::TestAuthEdgeCases::test_protected_routes_without_token PASSED [ 70%]
+tests/test_health.py::test_health_returns_healthy PASSED                 [ 71%]
+tests/test_health.py::test_ready_returns_ready PASSED                    [ 71%]
+tests/test_holders_accounts.py::test_create_holder PASSED                [ 72%]
+tests/test_holders_accounts.py::test_create_holder_requires_auth PASSED  [ 73%]
+tests/test_holders_accounts.py::test_duplicate_holder_rejected PASSED    [ 73%]
+tests/test_holders_accounts.py::test_get_holder PASSED                   [ 74%]
+tests/test_holders_accounts.py::test_get_holder_not_found PASSED         [ 74%]
+tests/test_holders_accounts.py::test_update_holder PASSED                [ 75%]
+tests/test_holders_accounts.py::test_create_account PASSED               [ 76%]
+tests/test_holders_accounts.py::test_create_account_requires_holder PASSED [ 76%]
+tests/test_holders_accounts.py::test_list_accounts PASSED                [ 77%]
+tests/test_holders_accounts.py::test_get_account PASSED                  [ 77%]
+tests/test_holders_accounts.py::test_cross_user_account_access_denied PASSED [ 78%]
+tests/test_holders_accounts.py::test_freeze_account PASSED               [ 79%]
+tests/test_holders_accounts.py::test_invalid_status_transition PASSED    [ 79%]
+tests/test_logging_and_health.py::test_json_log_format PASSED            [ 80%]
+tests/test_logging_and_health.py::test_json_log_includes_request_context PASSED [ 80%]
+tests/test_logging_and_health.py::test_error_envelope_no_traceback_on_500 PASSED [ 81%]
+tests/test_logging_and_health.py::test_validation_error_returns_safe_details PASSED [ 82%]
+tests/test_logging_and_health.py::test_health_no_sensitive_info PASSED   [ 82%]
+tests/test_middleware.py::test_response_has_request_id_header PASSED     [ 83%]
+tests/test_middleware.py::test_request_id_is_echoed_when_provided PASSED [ 83%]
+tests/test_middleware.py::test_error_envelope_on_404 PASSED              [ 84%]
+tests/test_middleware.py::test_error_envelope_on_405 PASSED              [ 85%]
+tests/test_middleware.py::test_error_envelope_does_not_leak_traceback PASSED [ 85%]
+tests/test_middleware.py::test_health_response_time_header PASSED        [ 86%]
+tests/test_playwright.py::test_01_new_customer_journey SKIPPED           [ 86%]
+tests/test_playwright.py::test_02_returning_customer SKIPPED (playwright
+not installed)                                                           [ 87%]
+tests/test_playwright.py::test_03_api_components SKIPPED (playwright not
+installed)                                                               [ 88%]
+tests/test_statements.py::test_generate_statement PASSED                 [ 88%]
+tests/test_statements.py::test_statement_balances PASSED                 [ 89%]
+tests/test_statements.py::test_list_statements PASSED                    [ 89%]
+tests/test_statements.py::test_get_statement PASSED                      [ 90%]
+tests/test_statements.py::test_statement_unauthorized_access PASSED      [ 91%]
+tests/test_stress.py::test_concurrent_transfers_no_overdraft PASSED      [ 91%]
+tests/test_stress.py::test_concurrent_card_spend_no_overdraft PASSED     [ 92%]
+tests/test_stress.py::test_idempotency_replay_returns_original PASSED    [ 92%]
+tests/test_stress.py::test_ledger_invariant_under_load PASSED            [ 93%]
+tests/test_stress.py::test_rapid_signup_uniqueness PASSED                [ 94%]
+tests/test_stress.py::test_card_spend_idempotency_replay PASSED          [ 94%]
+tests/test_transfers.py::test_transfer_success PASSED                    [ 95%]
+tests/test_transfers.py::test_transfer_updates_balances PASSED           [ 95%]
+tests/test_transfers.py::test_transfer_creates_double_entry PASSED       [ 96%]
+tests/test_transfers.py::test_transfer_insufficient_funds PASSED         [ 97%]
+tests/test_transfers.py::test_self_transfer_rejected PASSED              [ 97%]
+tests/test_transfers.py::test_idempotency_key_replay PASSED              [ 98%]
+tests/test_transfers.py::test_list_transfers PASSED                      [ 98%]
+tests/test_transfers.py::test_get_transfer PASSED                        [ 99%]
+tests/test_transfers.py::test_cross_user_transfer_denied PASSED          [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.12-final-0 _______________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+app/__init__.py                         0      0   100%
+app/auth/__init__.py                    0      0   100%
+app/auth/dependencies.py               17      1    94%   31
+app/auth/jwt.py                        22      1    95%   28
+app/config.py                          15      0   100%
+app/database.py                        24     12    50%   18-23, 35-39, 44, 49
+app/logging_config.py                  20      7    65%   20, 30-35
+app/main.py                            39      9    77%   24-31, 63
+app/middleware/__init__.py              0      0   100%
+app/middleware/error_handler.py        27      2    93%   57-58
+app/middleware/request_id.py           15      0   100%
+app/models/__init__.py                  5      0   100%
+app/models/account.py                  30      0   100%
+app/models/card.py                     32      0   100%
+app/models/statement.py                20      0   100%
+app/models/transaction.py              27      0   100%
+app/models/user.py                     27      0   100%
+app/routers/__init__.py                 0      0   100%
+app/routers/accounts.py                20      0   100%
+app/routers/auth.py                    25      0   100%
+app/routers/cards.py                   28      0   100%
+app/routers/health.py                  15      2    87%   24-25
+app/routers/holders.py                 17      0   100%
+app/routers/statements.py              17      0   100%
+app/routers/transfers.py               29      0   100%
+app/schemas/__init__.py                 0      0   100%
+app/schemas/account.py                 38      0   100%
+app/schemas/auth.py                    30      0   100%
+app/schemas/card.py                    31      0   100%
+app/schemas/statement.py               17      0   100%
+app/schemas/transaction.py             27      0   100%
+app/services/__init__.py                0      0   100%
+app/services/account_service.py        63      0   100%
+app/services/auth_service.py           54      2    96%   44, 75
+app/services/card_service.py           68      3    96%   18, 92, 106
+app/services/statement_service.py      44      3    93%   42-43, 80
+app/services/transfer_service.py       63      1    98%   42
+-----------------------------------------------------------------
+TOTAL                                 906     43    95%
+Required test coverage of 80.0% reached. Total coverage: 95.25%
+================== 164 passed, 3 skipped in 91.64s (0:01:31) ===================

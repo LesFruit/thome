@@ -31,7 +31,12 @@ def _enforce_card_ownership(db: Session, user: User, card_id: str) -> Card:
 
 
 def issue_card(db: Session, user: User, account_id: str) -> Card:
-    _enforce_account_ownership(db, user, account_id)
+    account = _enforce_account_ownership(db, user, account_id)
+    if account.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Account is {account.status}",
+        )
     card = Card(account_id=account_id)
     db.add(card)
     db.commit()
