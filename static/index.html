@@ -1,134 +1,399 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Banking Service Dashboard</title>
 <style>
-:root {
-  --primary: #1e40af; --primary-light: #3b82f6; --primary-bg: #eff6ff;
-  --success: #16a34a; --success-bg: #f0fdf4;
-  --danger: #dc2626; --danger-bg: #fef2f2;
-  --warn: #d97706; --warn-bg: #fffbeb;
-  --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
-  --text: #0f172a; --muted: #64748b; --light: #94a3b8;
-  --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+/* ===== THEME VARIABLES ===== */
+:root, [data-theme="light"] {
+  --primary: #1e40af; --primary-light: #3b82f6; --primary-dark: #1e3a8a;
+  --primary-bg: #eff6ff; --primary-ghost: rgba(59,130,246,0.08);
+  --success: #16a34a; --success-bg: #f0fdf4; --success-border: #bbf7d0;
+  --danger: #dc2626; --danger-bg: #fef2f2; --danger-border: #fecaca;
+  --warn: #d97706; --warn-bg: #fffbeb; --warn-border: #fde68a;
+  --info: #0284c7; --info-bg: #f0f9ff; --info-border: #bae6fd;
+  --bg: #f1f5f9; --bg-alt: #e2e8f0;
+  --card: #ffffff; --card-hover: #fafbfc;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --text: #0f172a; --text-secondary: #475569; --muted: #64748b; --light: #94a3b8; --faint: #cbd5e1;
+  --radius: 10px; --radius-sm: 6px; --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  --header-grad: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #0ea5e9 100%);
+  --card-card-grad: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
+[data-theme="dark"] {
+  --primary: #60a5fa; --primary-light: #93c5fd; --primary-dark: #3b82f6;
+  --primary-bg: rgba(59,130,246,0.12); --primary-ghost: rgba(59,130,246,0.08);
+  --success: #4ade80; --success-bg: rgba(74,222,128,0.1); --success-border: #166534;
+  --danger: #f87171; --danger-bg: rgba(248,113,113,0.1); --danger-border: #991b1b;
+  --warn: #fbbf24; --warn-bg: rgba(251,191,36,0.1); --warn-border: #92400e;
+  --info: #38bdf8; --info-bg: rgba(56,189,248,0.1); --info-border: #075985;
+  --bg: #0f172a; --bg-alt: #1e293b;
+  --card: #1e293b; --card-hover: #263548;
+  --border: #334155; --border-light: #1e293b;
+  --text: #f1f5f9; --text-secondary: #cbd5e1; --muted: #94a3b8; --light: #64748b; --faint: #475569;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
+  --header-grad: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  --card-card-grad: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* ===== RESET & BASE ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 
-/* Header */
-.header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: #fff; padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
-.header .user-bar { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
-.header .user-bar .email { opacity: 0.9; }
-.header button { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem; }
-.header button:hover { background: rgba(255,255,255,0.25); }
+/* ===== HEADER ===== */
+.header {
+  background: var(--header-grad);
+  color: #fff; padding: 0 1.5rem; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 200;
+}
+.header .logo { display: flex; align-items: center; gap: 10px; }
+.header .logo svg { width: 28px; height: 28px; }
+.header .logo h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.03em; }
+.header .right { display: flex; align-items: center; gap: 12px; }
+.header .user-pill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+.header .user-pill .avatar { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
+.hdr-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; font-weight: 500; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+.hdr-btn:hover { background: rgba(255,255,255,0.2); }
 
-/* Layout */
-.layout { display: flex; min-height: calc(100vh - 56px); }
+/* ===== LAYOUT ===== */
+.layout { display: flex; min-height: calc(100vh - 60px); }
 
-/* Sidebar */
-.sidebar { width: 200px; background: var(--card); border-right: 1px solid var(--border); padding: 0.5rem 0; flex-shrink: 0; }
-.sidebar .nav-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--muted); text-decoration: none; font-size: 0.85rem; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
-.sidebar .nav-item:hover { background: var(--primary-bg); color: var(--primary); }
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 220px; background: var(--card); border-right: 1px solid var(--border);
+  padding: 0.75rem 0; flex-shrink: 0; display: flex; flex-direction: column;
+  transition: width 0.2s, transform 0.2s;
+}
+.sidebar .nav-group { margin-bottom: 0.25rem; }
+.sidebar .nav-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--light); padding: 14px 18px 6px; font-weight: 700; }
+.sidebar .nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 18px;
+  color: var(--muted); text-decoration: none; font-size: 0.82rem; cursor: pointer;
+  border-left: 3px solid transparent; transition: all 0.12s; position: relative;
+}
+.sidebar .nav-item svg { width: 18px; height: 18px; opacity: 0.6; flex-shrink: 0; }
+.sidebar .nav-item:hover { background: var(--primary-ghost); color: var(--primary); }
+.sidebar .nav-item:hover svg { opacity: 1; }
 .sidebar .nav-item.active { background: var(--primary-bg); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
-.sidebar .nav-item.disabled { opacity: 0.4; pointer-events: none; }
-.sidebar .nav-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--light); padding: 12px 16px 4px; font-weight: 600; }
+.sidebar .nav-item.active svg { opacity: 1; }
+.sidebar .nav-item.disabled { opacity: 0.35; pointer-events: none; }
+.sidebar .nav-item .nav-badge { position: absolute; right: 12px; background: var(--primary); color: #fff; font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; font-weight: 700; }
+.sidebar-footer { margin-top: auto; padding: 12px 18px; border-top: 1px solid var(--border); }
 
-/* Main */
-.main { flex: 1; padding: 1.5rem 2rem; max-width: 960px; overflow-y: auto; }
-.section { display: none; }
+/* ===== MAIN CONTENT ===== */
+.main { flex: 1; padding: 1.5rem 2rem 12rem; max-width: 1100px; overflow-y: auto; }
+.section { display: none; animation: fadeIn 0.2s ease; }
 .section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Cards */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
-.card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
+/* ===== PAGE HEADERS ===== */
+.page-hdr { margin-bottom: 1.25rem; }
+.page-hdr h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; }
+.page-hdr p { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
 
-/* Forms */
-.form-row { margin-bottom: 0.75rem; }
-.form-row label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
-.form-row input, .form-row select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.85rem; outline: none; transition: border 0.15s; }
-.form-row input:focus, .form-row select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+/* ===== CARDS ===== */
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s;
+}
+.card:hover { box-shadow: var(--shadow); }
+.card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; }
+.card-title svg { width: 18px; height: 18px; color: var(--primary); }
 
-/* Buttons */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+/* ===== STATS ROW ===== */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 1.25rem; box-shadow: var(--shadow-sm); transition: all 0.15s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.stat-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 4px; letter-spacing: -0.03em; font-family: var(--mono); }
+.stat-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+/* ===== FORMS ===== */
+.form-row { margin-bottom: 0.85rem; }
+.form-row label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+.form-row input, .form-row select {
+  width: 100%; padding: 9px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 0.85rem; outline: none; transition: all 0.15s; background: var(--card); color: var(--text);
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px var(--primary-ghost); }
+.form-row input::placeholder { color: var(--faint); }
+.form-row .hint { font-size: 0.7rem; color: var(--light); margin-top: 3px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 18px; border: none; border-radius: var(--radius-sm);
+  font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-light); }
+.btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-md); }
 .btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { opacity: 0.9; }
 .btn-danger { background: var(--danger); color: #fff; }
-.btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--border); }
-.btn-outline:hover { background: var(--primary-bg); }
-.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+.btn-danger:hover { opacity: 0.9; }
+.btn-warn { background: var(--warn); color: #fff; }
+.btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--primary-ghost); color: var(--primary); border-color: var(--primary-light); }
+.btn-ghost { background: transparent; color: var(--muted); border: none; padding: 6px 10px; }
+.btn-ghost:hover { color: var(--text); background: var(--primary-ghost); }
+.btn-sm { padding: 5px 11px; font-size: 0.72rem; }
+.btn-lg { padding: 12px 24px; font-size: 0.9rem; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Alerts */
-.alert { padding: 10px 14px; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.75rem; display: none; }
-.alert.show { display: block; }
-.alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #bbf7d0; }
-.alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
-
-/* Tables */
+/* ===== TABLES ===== */
+.tbl-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-th { text-align: left; padding: 8px 10px; background: #f8fafc; color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 2px solid var(--border); }
-td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
-tr:hover td { background: #fafbfc; }
+th { text-align: left; padding: 10px 12px; background: var(--bg); color: var(--muted); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+tr:hover td { background: var(--card-hover); }
+.empty-row td { text-align: center; color: var(--light); padding: 2rem; font-style: italic; }
 
-/* Badges */
-.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+/* ===== BADGES ===== */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
 .badge-active { background: var(--success-bg); color: var(--success); }
 .badge-frozen, .badge-blocked { background: var(--warn-bg); color: var(--warn); }
 .badge-closed, .badge-cancelled { background: var(--danger-bg); color: var(--danger); }
+.badge-checking { background: var(--info-bg); color: var(--info); }
+.badge-savings { background: #faf5ff; color: #9333ea; }
+[data-theme="dark"] .badge-savings { background: rgba(147,51,234,0.12); }
 .badge-debit, .badge-card_spend { background: var(--danger-bg); color: var(--danger); }
 .badge-credit, .badge-deposit { background: var(--success-bg); color: var(--success); }
 
-/* Money */
-.money { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; }
+/* ===== MONEY ===== */
+.money { font-family: var(--mono); font-weight: 700; letter-spacing: -0.02em; }
 .money-pos { color: var(--success); }
 .money-neg { color: var(--danger); }
+.money-xl { font-size: 1.8rem; }
+.money-lg { font-size: 1.2rem; }
 
-/* Ops Panel */
-.ops-panel { position: fixed; bottom: 0; left: 200px; right: 0; height: 180px; background: #1e293b; color: #e2e8f0; font-family: 'SF Mono', monospace; font-size: 0.7rem; overflow-y: auto; border-top: 2px solid var(--primary); display: none; z-index: 100; }
-.ops-panel.show { display: block; }
-.ops-panel .ops-hdr { position: sticky; top: 0; background: #0f172a; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; }
-.ops-panel .ops-hdr span { font-weight: 600; color: var(--primary-light); }
-.ops-panel th { background: #0f172a; color: var(--light); border-bottom-color: #334155; }
-.ops-panel td { border-bottom-color: #334155; padding: 4px 8px; }
-.s2 { color: #4ade80; } .s4 { color: #fbbf24; } .s5 { color: #f87171; }
+/* ===== TOAST NOTIFICATIONS ===== */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 8px; }
+.toast {
+  padding: 12px 18px; border-radius: var(--radius); font-size: 0.82rem; font-weight: 500;
+  box-shadow: var(--shadow-lg); min-width: 280px; max-width: 420px;
+  display: flex; align-items: flex-start; gap: 10px; animation: toastIn 0.25s ease;
+  border-left: 4px solid;
+}
+.toast-success { background: var(--card); color: var(--text); border-color: var(--success); }
+.toast-danger { background: var(--card); color: var(--text); border-color: var(--danger); }
+.toast-info { background: var(--card); color: var(--text); border-color: var(--info); }
+.toast .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+.toast .toast-close { margin-left: auto; cursor: pointer; color: var(--light); font-size: 1rem; padding: 0 4px; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(30px); } }
 
-/* Guided steps */
-.steps { display: flex; gap: 2px; margin-bottom: 1.5rem; }
-.step { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.7rem; background: var(--border); color: var(--muted); border-radius: 4px; }
+/* ===== MODAL / CONFIRM ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--card); border-radius: var(--radius-lg); padding: 1.5rem;
+  min-width: 380px; max-width: 480px; box-shadow: var(--shadow-lg);
+  transform: scale(0.95); transition: transform 0.15s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.modal p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ===== CREDIT CARD VISUAL ===== */
+.cc-visual {
+  width: 300px; height: 180px; border-radius: 14px; padding: 1.25rem;
+  background: var(--card-card-grad); color: #e2e8f0; position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2); display: inline-flex; flex-direction: column; justify-content: space-between;
+}
+.cc-visual .cc-chip { width: 36px; height: 28px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 4px; }
+.cc-visual .cc-number { font-family: var(--mono); font-size: 1.15rem; letter-spacing: 0.12em; font-weight: 500; }
+.cc-visual .cc-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+.cc-visual .cc-name { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.cc-visual .cc-expiry { font-size: 0.7rem; text-align: right; }
+.cc-visual .cc-expiry span { display: block; font-size: 0.55rem; color: #94a3b8; text-transform: uppercase; }
+.cc-visual .cc-brand { position: absolute; top: 18px; right: 20px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+
+/* ===== ACCOUNT CARD MINI ===== */
+.acct-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.acct-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 1.25rem; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden;
+}
+.acct-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary-light); transform: translateY(-2px); }
+.acct-card.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-ghost); }
+.acct-card .acct-type { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+.acct-card .acct-bal { font-family: var(--mono); font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; }
+.acct-card .acct-id { font-family: var(--mono); font-size: 0.68rem; color: var(--light); margin-top: 8px; }
+.acct-card .acct-status { position: absolute; top: 14px; right: 14px; }
+
+/* ===== GUIDED STEPS ===== */
+.steps { display: flex; gap: 4px; margin-bottom: 1.5rem; position: relative; }
+.step {
+  flex: 1; text-align: center; padding: 10px 6px; font-size: 0.7rem; font-weight: 600;
+  background: var(--bg-alt); color: var(--light); border-radius: var(--radius-sm);
+  transition: all 0.2s; position: relative;
+}
 .step.done { background: var(--success-bg); color: var(--success); }
-.step.current { background: var(--primary-bg); color: var(--primary); font-weight: 600; }
+.step.current { background: var(--primary-bg); color: var(--primary); box-shadow: 0 0 0 2px var(--primary-ghost); }
+
+/* ===== LOADING ===== */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.15); z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.loading-overlay.show { opacity: 1; pointer-events: auto; }
+.loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* ===== SKELETON ===== */
+.skeleton { background: linear-gradient(90deg, var(--border-light) 25%, var(--bg-alt) 50%, var(--border-light) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-sm); }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ===== OPS PANEL ===== */
+.ops-panel {
+  position: fixed; bottom: 0; left: 220px; right: 0; height: 200px;
+  background: #0f172a; color: #e2e8f0; font-family: var(--mono); font-size: 0.7rem;
+  overflow-y: auto; border-top: 2px solid var(--primary); display: none; z-index: 150;
+  transition: height 0.2s;
+}
+.ops-panel.show { display: block; }
+.ops-hdr {
+  position: sticky; top: 0; background: #020617; padding: 8px 14px;
+  display: flex; justify-content: space-between; align-items: center; z-index: 10;
+  border-bottom: 1px solid #1e293b;
+}
+.ops-hdr span { font-weight: 700; color: var(--primary-light); font-size: 0.72rem; letter-spacing: 0.03em; }
+.ops-panel th { background: #020617; color: #64748b; border-bottom-color: #1e293b; font-size: 0.65rem; }
+.ops-panel td { border-bottom-color: #1e293b; padding: 5px 10px; }
+.s2 { color: #4ade80; } .s3 { color: #fbbf24; } .s4 { color: #fb923c; } .s5 { color: #f87171; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar { position: fixed; left: -220px; z-index: 300; height: calc(100vh - 60px); top: 60px; }
+  .sidebar.open { left: 0; box-shadow: var(--shadow-lg); }
+  .main { padding: 1rem; }
+  .ops-panel { left: 0; }
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .acct-cards { grid-template-columns: 1fr; }
+}
+
+/* ===== DIVIDER ===== */
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+/* ===== INLINE TABS ===== */
+.tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1rem; }
+.tab-btn { padding: 8px 16px; font-size: 0.8rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.12s; background: none; border-top: none; border-left: none; border-right: none; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ===== EMPTY STATE ===== */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 1rem; color: var(--faint); }
+.empty-state h3 { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; }
+.empty-state p { font-size: 0.82rem; margin-bottom: 1rem; }
+
+/* ===== SECTION SPACING ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <h1>Banking Service</h1>
-  <div class="user-bar" id="user-bar" style="display:none">
-    <span class="email" id="user-email"></span>
-    <button onclick="toggleOps()">Ops Panel</button>
-    <button onclick="doLogout()">Logout</button>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+    <h1>Banking Service</h1>
+  </div>
+  <div class="right">
+    <div id="user-bar" style="display:none">
+      <div class="user-pill">
+        <div class="avatar" id="user-avatar">?</div>
+        <span id="user-email"></span>
+      </div>
+    </div>
+    <button class="hdr-btn" id="ops-toggle" style="display:none" onclick="toggleOps()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      Ops
+    </button>
+    <button class="hdr-btn" id="theme-toggle" onclick="toggleTheme()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="hdr-btn" id="logout-btn" style="display:none" onclick="doLogout()">Logout</button>
   </div>
 </div>
 
+<!-- LAYOUT -->
 <div class="layout">
+
+<!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
-  <div class="nav-label">Getting Started</div>
-  <div class="nav-item active" data-tab="auth" onclick="showTab('auth')">Auth</div>
-  <div class="nav-item disabled" data-tab="profile" onclick="showTab('profile')">Profile</div>
-  <div class="nav-label">Banking</div>
-  <div class="nav-item disabled" data-tab="accounts" onclick="showTab('accounts')">Accounts</div>
-  <div class="nav-item disabled" data-tab="transfers" onclick="showTab('transfers')">Transfers</div>
-  <div class="nav-item disabled" data-tab="cards" onclick="showTab('cards')">Cards</div>
-  <div class="nav-item disabled" data-tab="statements" onclick="showTab('statements')">Statements</div>
+  <div class="nav-group">
+    <div class="nav-label">Getting Started</div>
+    <div class="nav-item active" data-tab="auth" onclick="showTab('auth')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Auth
+    </div>
+    <div class="nav-item disabled" data-tab="profile" onclick="showTab('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Banking</div>
+    <div class="nav-item disabled" data-tab="dashboard" onclick="showTab('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item disabled" data-tab="accounts" onclick="showTab('accounts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M1 10h22"/></svg>
+      Accounts
+    </div>
+    <div class="nav-item disabled" data-tab="transfers" onclick="showTab('transfers')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Transfers
+    </div>
+    <div class="nav-item disabled" data-tab="cards" onclick="showTab('cards')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+      Cards
+    </div>
+    <div class="nav-item disabled" data-tab="statements" onclick="showTab('statements')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Statements
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div style="font-size:0.68rem;color:var(--light)">v0.1.0 &middot; FastAPI + SQLite</div>
+  </div>
 </nav>
 
+<!-- MAIN -->
 <div class="main" id="main-content">
   <div class="steps" id="guided-steps">
-    <div class="step current" id="step-auth">1. Auth</div>
+    <div class="step current" id="step-auth">1. Sign Up</div>
     <div class="step" id="step-profile">2. Profile</div>
     <div class="step" id="step-accounts">3. Accounts</div>
     <div class="step" id="step-transfers">4. Transfers</div>
@@ -136,35 +401,50 @@ tr:hover td { background: #fafbfc; }
     <div class="step" id="step-statements">6. Statements</div>
   </div>
 
-  <!-- AUTH -->
+  <!-- AUTH SECTION -->
   <div class="section active" id="section-auth">
-    <div class="card">
-      <h2>Sign Up</h2>
-      <div id="signup-alert" class="alert"></div>
-      <div class="form-grid">
+    <div class="page-hdr"><h2>Welcome</h2><p>Sign up for a new account or log in to your existing one.</p></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Sign Up
+        </div>
         <div class="form-row"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
-        <div class="form-row"><label>Password (8+ chars, upper, number, special)</label><input type="password" id="signup-password" placeholder="StrongPass1!"></div>
+        <div class="form-row"><label>Password</label><input type="password" id="signup-password" placeholder="StrongPass1!">
+          <div class="hint">Min 8 chars, uppercase, number, special character</div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="doSignup()" id="btn-signup">Create Account</button>
       </div>
-      <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
-    </div>
-    <div class="card">
-      <h2>Log In</h2>
-      <div id="login-alert" class="alert"></div>
-      <div class="form-grid">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Log In
+        </div>
         <div class="form-row"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
         <div class="form-row"><label>Password</label><input type="password" id="login-password"></div>
+        <button class="btn btn-primary btn-block" onclick="doLogin()" id="btn-login">Log In</button>
       </div>
-      <button class="btn btn-primary" onclick="doLogin()">Log In</button>
     </div>
   </div>
 
-  <!-- PROFILE -->
+  <!-- PROFILE SECTION -->
   <div class="section" id="section-profile">
+    <div class="page-hdr"><h2>Profile</h2><p>Manage your account holder information.</p></div>
     <div class="card">
-      <h2>Account Holder Profile</h2>
-      <div id="profile-alert" class="alert"></div>
-      <div id="profile-view" style="display:none;margin-bottom:1rem">
-        <table><tr><td style="width:120px;color:var(--muted)">Name</td><td id="pv-name"></td></tr><tr><td style="color:var(--muted)">Date of Birth</td><td id="pv-dob"></td></tr></table>
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Account Holder
+      </div>
+      <div id="profile-view" style="display:none">
+        <div style="display:flex;gap:2rem;align-items:center;margin-bottom:1rem">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:var(--primary)" id="profile-avatar">?</div>
+          <div>
+            <div style="font-size:1.1rem;font-weight:700" id="pv-name"></div>
+            <div style="font-size:0.82rem;color:var(--muted)" id="pv-dob"></div>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="showProfileEdit()">Edit Profile</button>
       </div>
       <div id="profile-form">
         <div class="form-grid">
@@ -172,313 +452,842 @@ tr:hover td { background: #fafbfc; }
           <div class="form-row"><label>Last Name</label><input id="pf-last" placeholder="Doe"></div>
         </div>
         <div class="form-row"><label>Date of Birth</label><input type="date" id="pf-dob"></div>
-        <button class="btn btn-primary" onclick="doCreateProfile()">Create Profile</button>
+        <div style="display:flex;gap:8px;margin-top:0.5rem">
+          <button class="btn btn-primary" onclick="doSaveProfile()" id="btn-profile">Save Profile</button>
+          <button class="btn btn-ghost" id="btn-cancel-edit" style="display:none" onclick="cancelProfileEdit()">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ACCOUNTS -->
+  <!-- DASHBOARD SECTION -->
+  <div class="section" id="section-dashboard">
+    <div class="page-hdr"><h2>Dashboard</h2><p>Your financial overview at a glance.</p></div>
+    <div class="stats-row" id="dash-stats"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M1 10h22"/></svg>
+          Accounts
+        </div>
+        <div id="dash-accounts"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+          Recent Activity
+        </div>
+        <div id="dash-activity"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+        Your Cards
+      </div>
+      <div id="dash-cards" style="display:flex;gap:1rem;flex-wrap:wrap;padding-top:0.5rem"></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTS SECTION -->
   <div class="section" id="section-accounts">
-    <div class="card">
-      <h2>Your Accounts</h2>
-      <div id="acct-alert" class="alert"></div>
-      <div style="margin-bottom:1rem">
-        <select id="new-acct-type" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius)"><option value="checking">Checking</option><option value="savings">Savings</option></select>
-        <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="doCreateAcct()">Open Account</button>
+    <div class="page-hdr">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><h2>Accounts</h2><p>Manage your bank accounts.</p></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="new-acct-type" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.82rem;background:var(--card);color:var(--text)">
+            <option value="checking">Checking</option><option value="savings">Savings</option>
+          </select>
+          <button class="btn btn-primary" onclick="doCreateAcct()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Open Account
+          </button>
+        </div>
       </div>
-      <table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Balance</th><th>Actions</th></tr></thead><tbody id="acct-tbody"></tbody></table>
+    </div>
+    <div class="acct-cards" id="acct-cards"></div>
+    <div class="card">
+      <div class="card-title">All Accounts</div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Balance</th><th>Opened</th><th>Actions</th></tr></thead>
+        <tbody id="acct-tbody"></tbody></table>
+      </div>
     </div>
   </div>
 
-  <!-- TRANSFERS -->
+  <!-- TRANSFERS SECTION -->
   <div class="section" id="section-transfers">
-    <div class="card">
-      <h2>Deposit Funds</h2>
-      <div id="dep-alert" class="alert"></div>
+    <div class="page-hdr"><h2>Transfers &amp; Deposits</h2><p>Move money between accounts.</p></div>
+    <div class="tab-bar" id="xfer-tabs">
+      <button class="tab-btn active" onclick="showXferTab('deposit')">Deposit</button>
+      <button class="tab-btn" onclick="showXferTab('transfer')">Transfer</button>
+      <button class="tab-btn" onclick="showXferTab('history')">History</button>
+      <button class="tab-btn" onclick="showXferTab('all-transfers')">All Transfers</button>
+    </div>
+    <!-- Deposit -->
+    <div class="card" id="xfer-deposit">
+      <div class="card-title">Deposit Funds</div>
       <div class="form-grid">
-        <div class="form-row"><label>Account</label><select id="dep-acct"></select></div>
+        <div class="form-row"><label>To Account</label><select id="dep-acct"></select></div>
         <div class="form-row"><label>Amount ($)</label><input type="number" id="dep-amt" step="0.01" min="0.01" placeholder="100.00"></div>
       </div>
-      <button class="btn btn-success" onclick="doDeposit()">Deposit</button>
+      <button class="btn btn-success" onclick="doDeposit()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Deposit
+      </button>
     </div>
-    <div class="card">
-      <h2>Transfer Funds</h2>
-      <div id="xfer-alert" class="alert"></div>
+    <!-- Transfer -->
+    <div class="card" id="xfer-transfer" style="display:none">
+      <div class="card-title">Transfer Between Accounts</div>
       <div class="form-grid">
-        <div class="form-row"><label>From</label><select id="xfer-from"></select></div>
-        <div class="form-row"><label>To</label><select id="xfer-to"></select></div>
+        <div class="form-row"><label>From Account</label><select id="xfer-from"></select></div>
+        <div class="form-row"><label>To Account</label><select id="xfer-to"></select></div>
       </div>
       <div class="form-row"><label>Amount ($)</label><input type="number" id="xfer-amt" step="0.01" min="0.01" placeholder="50.00"></div>
-      <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
+      <button class="btn btn-primary" onclick="doTransfer()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+        Transfer
+      </button>
     </div>
-    <div class="card">
-      <h2>Transaction History</h2>
+    <!-- Transaction History -->
+    <div class="card" id="xfer-history" style="display:none">
+      <div class="card-title">Transaction History</div>
       <div class="form-row"><label>Account</label><select id="txn-acct" onchange="loadTxns()"></select></div>
-      <table><thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody id="txn-tbody"></tbody></table>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead>
+        <tbody id="txn-tbody"></tbody></table>
+      </div>
+    </div>
+    <!-- All Transfers -->
+    <div class="card" id="xfer-all-transfers" style="display:none">
+      <div class="card-title">All Transfers</div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>ID</th><th>From</th><th>To</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody id="transfer-tbody"></tbody></table>
+      </div>
     </div>
   </div>
 
-  <!-- CARDS -->
+  <!-- CARDS SECTION -->
   <div class="section" id="section-cards">
-    <div class="card">
-      <h2>Your Cards</h2>
-      <div id="card-alert" class="alert"></div>
-      <div style="margin-bottom:1rem">
-        <select id="card-acct"></select>
-        <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="doIssueCard()">Issue Card</button>
+    <div class="page-hdr">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><h2>Cards</h2><p>Issue and manage debit cards.</p></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="card-acct" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.82rem;background:var(--card);color:var(--text)"></select>
+          <button class="btn btn-primary" onclick="doIssueCard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Issue Card
+          </button>
+        </div>
       </div>
-      <table><thead><tr><th>Card</th><th>Account</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead><tbody id="card-tbody"></tbody></table>
     </div>
-    <div class="card">
-      <h2>Card Spend</h2>
-      <div id="spend-alert" class="alert"></div>
-      <div class="form-grid">
+    <div id="cards-visual" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Card Management</div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Card</th><th>Account</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead>
+          <tbody id="card-tbody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Card Spend</div>
         <div class="form-row"><label>Card</label><select id="spend-card"></select></div>
-        <div class="form-row"><label>Amount ($)</label><input type="number" id="spend-amt" step="0.01" min="0.01" placeholder="25.00"></div>
+        <div class="form-grid">
+          <div class="form-row"><label>Amount ($)</label><input type="number" id="spend-amt" step="0.01" min="0.01" placeholder="25.00"></div>
+          <div class="form-row"><label>Merchant</label><input id="spend-merch" placeholder="Coffee Shop"></div>
+        </div>
+        <button class="btn btn-primary" onclick="doSpend()">Charge Card</button>
       </div>
-      <div class="form-row"><label>Merchant</label><input id="spend-merch" placeholder="Coffee Shop"></div>
-      <button class="btn btn-primary" onclick="doSpend()">Charge Card</button>
     </div>
   </div>
 
-  <!-- STATEMENTS -->
+  <!-- STATEMENTS SECTION -->
   <div class="section" id="section-statements">
-    <div class="card">
-      <h2>Generate Statement</h2>
-      <div id="stmt-alert" class="alert"></div>
-      <div class="form-grid">
+    <div class="page-hdr"><h2>Statements</h2><p>Generate and view account statements.</p></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Generate Statement</div>
         <div class="form-row"><label>Account</label><select id="stmt-acct"></select></div>
-        <div class="form-row"><label>Start Date</label><input type="date" id="stmt-start"></div>
+        <div class="form-grid">
+          <div class="form-row"><label>Start Date</label><input type="date" id="stmt-start"></div>
+          <div class="form-row"><label>End Date</label><input type="date" id="stmt-end"></div>
+        </div>
+        <button class="btn btn-primary" onclick="doGenStmt()">Generate Statement</button>
       </div>
-      <div class="form-row"><label>End Date</label><input type="date" id="stmt-end"></div>
-      <button class="btn btn-primary" onclick="doGenStmt()">Generate</button>
+      <div class="card" id="stmt-detail-card" style="display:none">
+        <div class="card-title">Statement Summary</div>
+        <div id="stmt-detail"></div>
+      </div>
     </div>
-    <div class="card">
-      <h2>Statement History</h2>
-      <table><thead><tr><th>Period</th><th>Opening</th><th>Credits</th><th>Debits</th><th>Closing</th><th>Txns</th></tr></thead><tbody id="stmt-tbody"></tbody></table>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Statement History</div>
+      <div class="form-row"><label>Account</label><select id="stmt-list-acct" onchange="loadStmts()"></select></div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Period</th><th>Opening</th><th>Credits</th><th>Debits</th><th>Closing</th><th>Txns</th><th></th></tr></thead>
+        <tbody id="stmt-tbody"></tbody></table>
+      </div>
     </div>
   </div>
-</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- OPS PANEL -->
+<div class="ops-panel" id="ops-panel">
+  <div class="ops-hdr">
+    <span>API Request Log (Reviewer / Ops Panel)</span>
+    <div style="display:flex;gap:8px">
+      <span style="color:#64748b" id="ops-count">0 requests</span>
+      <button class="btn btn-sm" style="color:#e2e8f0;border:1px solid #334155;background:transparent" onclick="opsLog.length=0;renderOps()">Clear</button>
+    </div>
+  </div>
+  <table><thead><tr><th style="width:80px">Time</th><th style="width:60px">Method</th><th>Path</th><th style="width:50px">Status</th><th style="width:60px">Latency</th><th>X-Request-ID</th></tr></thead>
+  <tbody id="ops-tbody"></tbody></table>
 </div>
 
-<!-- Ops Panel -->
-<div class="ops-panel" id="ops-panel">
-  <div class="ops-hdr"><span>API Request Log (Reviewer/Ops)</span><button class="btn btn-sm" style="color:#e2e8f0;border-color:#475569" onclick="opsLog.length=0;renderOps()">Clear</button></div>
-  <table><thead><tr><th>Time</th><th>Method</th><th>Path</th><th>Status</th><th>Latency</th><th>X-Request-ID</th></tr></thead><tbody id="ops-tbody"></tbody></table>
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading"><div class="loader"></div></div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modal-title">Confirm</h3>
+    <p id="modal-msg">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm" onclick="modalConfirm()">Confirm</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// State
-let accessToken=null, refreshToken=null, currentUser=null, accounts=[], allCards=[];
-const opsLog=[];
+// ===== STATE =====
+let accessToken = null, refreshToken = null, currentUser = null, holderData = null;
+let accounts = [], allCards = [], allTransfers = [];
+const opsLog = [];
+let _modalCb = null;
+let _profileEditMode = false;
 
-// Helpers
-const $=id=>document.getElementById(id);
-const fmt=c=>'$'+(c/100).toFixed(2);
-const uid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});
-const badge=s=>`<span class="badge badge-${s}">${s}</span>`;
+// ===== HELPERS =====
+const $ = id => document.getElementById(id);
+const fmt = c => '$' + (Math.abs(c) / 100).toFixed(2);
+const fmtSigned = c => (c >= 0 ? '+' : '-') + fmt(c);
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });
+const shortId = id => id ? id.slice(0, 8) + '...' : '-';
+const badge = s => `<span class="badge badge-${s}">${s}</span>`;
+const dateFmt = d => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
+const timeFmt = d => d ? new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
-function alert_(id,msg,type){const e=$(id);e.className=`alert show alert-${type}`;e.textContent=msg;setTimeout(()=>e.classList.remove('show'),5000)}
+// ===== TOAST =====
+function toast(msg, type = 'success') {
+  const icons = { success: '\u2705', danger: '\u274C', info: '\u2139\uFE0F' };
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type] || ''}</span><span>${msg}</span><span class="toast-close" onclick="this.parentElement.remove()">&times;</span>`;
+  $('toast-container').appendChild(el);
+  setTimeout(() => { el.style.animation = 'toastOut 0.25s ease forwards'; setTimeout(() => el.remove(), 250); }, 4000);
+}
 
-// API client with ops logging
-async function api(method,path,body){
-  const t0=performance.now();
-  const h={'Content-Type':'application/json'};
-  if(accessToken)h['Authorization']=`Bearer ${accessToken}`;
-  const opts={method,headers:h};
-  if(body)opts.body=JSON.stringify(body);
-  const r=await fetch(`/api/v1${path}`,opts);
-  const ms=(performance.now()-t0).toFixed(0);
-  const rid=r.headers.get('x-request-id')||'-';
-  opsLog.unshift({t:new Date().toLocaleTimeString(),method,path:`/api/v1${path}`,status:r.status,ms:ms+'ms',rid});
+// ===== LOADING =====
+let _loadCount = 0;
+function showLoading() { _loadCount++; $('loading').classList.add('show'); }
+function hideLoading() { _loadCount = Math.max(0, _loadCount - 1); if (_loadCount === 0) $('loading').classList.remove('show'); }
+
+// ===== MODAL =====
+function confirm_(title, msg, btnText, btnClass, cb) {
+  $('modal-title').textContent = title;
+  $('modal-msg').textContent = msg;
+  $('modal-confirm').textContent = btnText;
+  $('modal-confirm').className = `btn ${btnClass}`;
+  _modalCb = cb;
+  $('modal-overlay').classList.add('open');
+}
+function closeModal() { $('modal-overlay').classList.remove('open'); _modalCb = null; }
+function modalConfirm() { if (_modalCb) _modalCb(); closeModal(); }
+
+// ===== THEME =====
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch(_) {}
+}
+(function initTheme() {
+  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch(_) {}
+})();
+
+// ===== API CLIENT =====
+async function api(method, path, body, opts = {}) {
+  const t0 = performance.now();
+  const h = { 'Content-Type': 'application/json' };
+  if (accessToken) h['Authorization'] = `Bearer ${accessToken}`;
+  const fetchOpts = { method, headers: h };
+  if (body) fetchOpts.body = JSON.stringify(body);
+
+  const fullPath = path.startsWith('/api/') || path.startsWith('/health') || path.startsWith('/ready') ? path : `/api/v1${path}`;
+  const r = await fetch(fullPath, fetchOpts);
+  const ms = (performance.now() - t0).toFixed(0);
+  const rid = r.headers.get('x-request-id') || '-';
+
+  opsLog.unshift({ t: new Date().toLocaleTimeString(), method, path: fullPath, status: r.status, ms: ms + 'ms', rid });
+  if (opsLog.length > 200) opsLog.length = 200;
   renderOps();
-  const d=r.headers.get('content-type')?.includes('json')?await r.json():null;
-  if(!r.ok){throw new Error(d?.error?.message||d?.detail||JSON.stringify(d))}
-  return{data:d,status:r.status};
+
+  const d = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
+
+  // Auto-refresh on 401
+  if (r.status === 401 && refreshToken && !opts._retried) {
+    const refreshed = await tryRefresh();
+    if (refreshed) return api(method, path, body, { _retried: true });
+  }
+
+  if (!r.ok) throw new Error(d?.error?.message || d?.detail || `HTTP ${r.status}`);
+  return { data: d, status: r.status };
 }
 
-// Navigation
-function showTab(t){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  $(`section-${t}`).classList.add('active');
-  document.querySelector(`[data-tab="${t}"]`).classList.add('active');
-  if(t==='accounts')loadAccounts();
-  if(t==='transfers'){loadAccounts().then(popSelects)}
-  if(t==='cards'){loadAccounts().then(()=>{popSelects();loadCards()})}
-  if(t==='statements'){loadAccounts().then(()=>{popSelects();loadStmts()})}
-}
-function enableTab(t){document.querySelector(`[data-tab="${t}"]`).classList.remove('disabled')}
-function updateSteps(s){
-  const ss=['auth','profile','accounts','transfers','cards','statements'];
-  const i=ss.indexOf(s);
-  ss.forEach((x,j)=>{$(`step-${x}`).className=j<i?'step done':j===i?'step current':'step'});
+async function tryRefresh() {
+  try {
+    const r = await fetch('/api/v1/auth/refresh', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    accessToken = d.access_token;
+    refreshToken = d.refresh_token;
+    return true;
+  } catch(_) { return false; }
 }
 
-// Auth
-async function doSignup(){
-  try{
-    const{data}=await api('POST','/auth/signup',{email:$('signup-email').value,password:$('signup-password').value});
-    alert_('signup-alert',`Account created for ${data.email}! Log in below.`,'success');
-    $('login-email').value=$('signup-email').value;
-  }catch(e){alert_('signup-alert',e.message,'danger')}
+// ===== NAVIGATION =====
+function showTab(t) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  $(`section-${t}`)?.classList.add('active');
+  document.querySelector(`[data-tab="${t}"]`)?.classList.add('active');
+
+  if (t === 'dashboard') loadDashboard();
+  if (t === 'accounts') loadAccounts();
+  if (t === 'transfers') { loadAccounts().then(popSelects); }
+  if (t === 'cards') { loadAccounts().then(() => { popSelects(); loadCards(); }); }
+  if (t === 'statements') { loadAccounts().then(() => { popSelects(); loadStmts(); }); }
 }
-async function doLogin(){
-  try{
-    const{data}=await api('POST','/auth/login',{email:$('login-email').value,password:$('login-password').value});
-    accessToken=data.access_token;refreshToken=data.refresh_token;
-    const me=await api('GET','/auth/me');currentUser=me.data;
-    $('user-email').textContent=me.data.email;$('user-bar').style.display='flex';
-    enableTab('profile');showTab('profile');updateSteps('profile');loadProfile();
-  }catch(e){alert_('login-alert',e.message,'danger')}
+function enableTab(t) { document.querySelector(`[data-tab="${t}"]`)?.classList.remove('disabled'); }
+function updateSteps(s) {
+  const ss = ['auth', 'profile', 'accounts', 'transfers', 'cards', 'statements'];
+  const i = ss.indexOf(s);
+  ss.forEach((x, j) => { $(`step-${x}`).className = j < i ? 'step done' : j === i ? 'step current' : 'step'; });
 }
-async function doLogout(){
-  try{await api('POST','/auth/logout',{refresh_token:refreshToken})}catch(_){}
-  accessToken=null;refreshToken=null;currentUser=null;
-  $('user-bar').style.display='none';
-  document.querySelectorAll('.nav-item').forEach(n=>{if(n.dataset.tab!=='auth')n.classList.add('disabled')});
-  showTab('auth');updateSteps('auth');
+function setLoggedIn(email) {
+  const initial = email.charAt(0).toUpperCase();
+  $('user-avatar').textContent = initial;
+  $('user-email').textContent = email;
+  $('user-bar').style.display = 'flex';
+  $('logout-btn').style.display = '';
+  $('ops-toggle').style.display = '';
+  enableTab('profile');
 }
 
-// Profile
-async function loadProfile(){
-  try{
-    const{data}=await api('GET','/holders/me');
-    $('pv-name').textContent=`${data.first_name} ${data.last_name}`;
-    $('pv-dob').textContent=data.date_of_birth;
-    $('profile-view').style.display='block';$('profile-form').style.display='none';
-    enableTab('accounts');updateSteps('accounts');
-  }catch(_){$('profile-view').style.display='none';$('profile-form').style.display='block'}
-}
-async function doCreateProfile(){
-  try{
-    await api('POST','/holders',{first_name:$('pf-first').value,last_name:$('pf-last').value,date_of_birth:$('pf-dob').value});
-    alert_('profile-alert','Profile created!','success');loadProfile();
-  }catch(e){alert_('profile-alert',e.message,'danger')}
+// ===== AUTH =====
+async function doSignup() {
+  const email = $('signup-email').value.trim();
+  const password = $('signup-password').value;
+  if (!email || !password) return toast('Please fill in all fields', 'danger');
+  showLoading();
+  try {
+    const { data } = await api('POST', '/auth/signup', { email, password });
+    toast(`Account created for ${data.email}! Log in below.`, 'success');
+    $('login-email').value = email;
+    $('login-password').focus();
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
 }
 
-// Accounts
-async function loadAccounts(){
-  try{const{data}=await api('GET','/accounts');accounts=data;renderAccounts()}catch(_){accounts=[]}
-}
-function renderAccounts(){
-  $('acct-tbody').innerHTML=accounts.map(a=>`<tr>
-    <td style="font-family:monospace;font-size:0.75rem">${a.id.slice(0,8)}...</td>
-    <td>${a.account_type}</td><td>${badge(a.status)}</td>
-    <td class="money ${a.balance_cents>=0?'money-pos':'money-neg'}">${fmt(a.balance_cents)}</td>
-    <td>${a.status==='active'?`<button class="btn btn-outline btn-sm" onclick="chgAcct('${a.id}','frozen')">Freeze</button>`:''}
-    ${a.status==='frozen'?`<button class="btn btn-outline btn-sm" onclick="chgAcct('${a.id}','active')">Activate</button>`:''}
-    ${a.status!=='closed'?`<button class="btn btn-danger btn-sm" onclick="chgAcct('${a.id}','closed')">Close</button>`:''}</td>
-  </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No accounts yet</td></tr>';
-  if(accounts.length){enableTab('transfers');enableTab('cards');enableTab('statements')}
-}
-async function doCreateAcct(){
-  try{await api('POST','/accounts',{account_type:$('new-acct-type').value});alert_('acct-alert','Account opened!','success');loadAccounts();updateSteps('transfers')}
-  catch(e){alert_('acct-alert',e.message,'danger')}
-}
-async function chgAcct(id,s){
-  try{await api('PATCH',`/accounts/${id}`,{status:s});loadAccounts()}
-  catch(e){alert_('acct-alert',e.message,'danger')}
+async function doLogin() {
+  const email = $('login-email').value.trim();
+  const password = $('login-password').value;
+  if (!email || !password) return toast('Please fill in all fields', 'danger');
+  showLoading();
+  try {
+    const { data } = await api('POST', '/auth/login', { email, password });
+    accessToken = data.access_token;
+    refreshToken = data.refresh_token;
+    const me = await api('GET', '/auth/me');
+    currentUser = me.data;
+    setLoggedIn(me.data.email);
+    enableTab('profile');
+    showTab('profile');
+    updateSteps('profile');
+    loadProfile();
+    toast('Logged in successfully', 'success');
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
 }
 
-// Populate selects
-function popSelects(){
-  const a=accounts.filter(x=>x.status==='active');
-  const o=a.map(x=>`<option value="${x.id}">${x.account_type} (${fmt(x.balance_cents)})</option>`).join('');
-  ['dep-acct','xfer-from','xfer-to','txn-acct','card-acct','stmt-acct'].forEach(id=>{if($(id))$(id).innerHTML=o});
+async function doLogout() {
+  try { await api('POST', '/auth/logout', { refresh_token: refreshToken }); } catch(_) {}
+  accessToken = null; refreshToken = null; currentUser = null; holderData = null;
+  accounts = []; allCards = []; allTransfers = [];
+  $('user-bar').style.display = 'none';
+  $('logout-btn').style.display = 'none';
+  $('ops-toggle').style.display = 'none';
+  document.querySelectorAll('.nav-item').forEach(n => { if (n.dataset.tab !== 'auth') n.classList.add('disabled'); });
+  showTab('auth');
+  updateSteps('auth');
+  toast('Logged out', 'info');
 }
 
-// Transfers
-async function doDeposit(){
-  try{const c=Math.round(parseFloat($('dep-amt').value)*100);
-    await api('POST',`/accounts/${$('dep-acct').value}/deposit`,{amount_cents:c});
-    alert_('dep-alert',`Deposited ${fmt(c)}!`,'success');$('dep-amt').value='';loadAccounts().then(popSelects);
-  }catch(e){alert_('dep-alert',e.message,'danger')}
-}
-async function doTransfer(){
-  try{const c=Math.round(parseFloat($('xfer-amt').value)*100);
-    await api('POST','/transfers',{source_account_id:$('xfer-from').value,destination_account_id:$('xfer-to').value,amount_cents:c,idempotency_key:uid()});
-    alert_('xfer-alert',`Transferred ${fmt(c)}!`,'success');$('xfer-amt').value='';loadAccounts().then(popSelects);updateSteps('cards');
-  }catch(e){alert_('xfer-alert',e.message,'danger')}
-}
-async function loadTxns(){
-  const id=$('txn-acct').value;if(!id)return;
-  try{const{data}=await api('GET',`/accounts/${id}/transactions`);
-    $('txn-tbody').innerHTML=data.map(t=>`<tr>
-      <td>${badge(t.type)}</td>
-      <td class="money ${['credit','deposit'].includes(t.type)?'money-pos':'money-neg'}">${['credit','deposit'].includes(t.type)?'+':'-'}${fmt(t.amount_cents)}</td>
-      <td>${t.description||'-'}</td>
-      <td style="color:var(--muted)">${new Date(t.created_at).toLocaleString()}</td>
-    </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted)">No transactions</td></tr>';
-  }catch(_){}
+// ===== PROFILE =====
+async function loadProfile() {
+  try {
+    const { data } = await api('GET', '/holders/me');
+    holderData = data;
+    $('pv-name').textContent = `${data.first_name} ${data.last_name}`;
+    $('pv-dob').textContent = `Born ${dateFmt(data.date_of_birth)}`;
+    $('profile-avatar').textContent = data.first_name.charAt(0) + data.last_name.charAt(0);
+    $('profile-view').style.display = 'block';
+    $('profile-form').style.display = 'none';
+    _profileEditMode = false;
+    enableTab('dashboard'); enableTab('accounts');
+    updateSteps('accounts');
+  } catch(_) {
+    $('profile-view').style.display = 'none';
+    $('profile-form').style.display = 'block';
+    $('btn-cancel-edit').style.display = 'none';
+    $('btn-profile').textContent = 'Create Profile';
+    _profileEditMode = false;
+  }
 }
 
-// Cards
-async function doIssueCard(){
-  try{await api('POST',`/accounts/${$('card-acct').value}/cards`);alert_('card-alert','Card issued!','success');loadCards()}
-  catch(e){alert_('card-alert',e.message,'danger')}
+function showProfileEdit() {
+  _profileEditMode = true;
+  $('pf-first').value = holderData?.first_name || '';
+  $('pf-last').value = holderData?.last_name || '';
+  $('pf-dob').value = holderData?.date_of_birth || '';
+  $('profile-view').style.display = 'none';
+  $('profile-form').style.display = 'block';
+  $('btn-cancel-edit').style.display = '';
+  $('btn-profile').textContent = 'Update Profile';
 }
-async function loadCards(){
-  allCards=[];
-  for(const a of accounts){try{const{data}=await api('GET',`/accounts/${a.id}/cards`);allCards.push(...data)}catch(_){}}
+function cancelProfileEdit() {
+  $('profile-view').style.display = 'block';
+  $('profile-form').style.display = 'none';
+  _profileEditMode = false;
+}
+
+async function doSaveProfile() {
+  const body = { first_name: $('pf-first').value.trim(), last_name: $('pf-last').value.trim(), date_of_birth: $('pf-dob').value };
+  if (!body.first_name || !body.last_name || !body.date_of_birth) return toast('Please fill all profile fields', 'danger');
+  showLoading();
+  try {
+    if (_profileEditMode && holderData) {
+      await api('PATCH', '/holders/me', body);
+      toast('Profile updated', 'success');
+    } else {
+      await api('POST', '/holders', body);
+      toast('Profile created!', 'success');
+    }
+    loadProfile();
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  await loadAccounts();
+  await loadCards();
+
+  const totalBalance = accounts.reduce((s, a) => s + a.balance_cents, 0);
+  const activeAccts = accounts.filter(a => a.status === 'active').length;
+  const activeCards = allCards.filter(c => c.status === 'active').length;
+
+  $('dash-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total Balance</div>
+      <div class="stat-value money ${totalBalance >= 0 ? 'money-pos' : 'money-neg'}">${fmt(totalBalance)}</div>
+      <div class="stat-sub">${accounts.length} account${accounts.length !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Accounts</div>
+      <div class="stat-value">${activeAccts}</div>
+      <div class="stat-sub">of ${accounts.length} total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Cards</div>
+      <div class="stat-value">${activeCards}</div>
+      <div class="stat-sub">${allCards.length} total issued</div>
+    </div>
+  `;
+
+  $('dash-accounts').innerHTML = accounts.length ?
+    accounts.map(a => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light)">
+      <div><span style="font-weight:600">${a.account_type}</span> ${badge(a.status)} <span style="font-family:var(--mono);font-size:0.68rem;color:var(--light);margin-left:4px">${shortId(a.id)}</span></div>
+      <span class="money ${a.balance_cents >= 0 ? 'money-pos' : 'money-neg'}">${fmt(a.balance_cents)}</span>
+    </div>`).join('') :
+    '<div class="empty-state"><p>No accounts yet.</p><button class="btn btn-outline btn-sm" onclick="showTab(\'accounts\')">Open an Account</button></div>';
+
+  // Recent activity - load transactions from first account
+  if (accounts.length) {
+    try {
+      const { data } = await api('GET', `/accounts/${accounts[0].id}/transactions`);
+      const recent = data.slice(-5).reverse();
+      $('dash-activity').innerHTML = recent.length ?
+        recent.map(t => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-light)">
+          <div>${badge(t.type)} <span style="font-size:0.78rem;margin-left:4px">${t.description || '-'}</span></div>
+          <span class="money ${['credit','deposit'].includes(t.type) ? 'money-pos' : 'money-neg'}">${['credit','deposit'].includes(t.type) ? '+' : '-'}${fmt(t.amount_cents)}</span>
+        </div>`).join('') :
+        '<div style="color:var(--muted);font-size:0.82rem;padding:1rem 0">No recent activity</div>';
+    } catch(_) { $('dash-activity').innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:1rem 0">No activity data</div>'; }
+  } else {
+    $('dash-activity').innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:1rem 0">Open an account to get started</div>';
+  }
+
+  // Cards visual
+  $('dash-cards').innerHTML = allCards.length ?
+    allCards.filter(c => c.status === 'active').slice(0, 3).map(c => renderCCVisual(c)).join('') :
+    '<div style="color:var(--muted);font-size:0.82rem;padding:1rem 0">No cards issued yet</div>';
+}
+
+// ===== ACCOUNTS =====
+async function loadAccounts() {
+  try {
+    const { data } = await api('GET', '/accounts');
+    accounts = data;
+    renderAccounts();
+  } catch(_) { accounts = []; }
+}
+
+function renderAccounts() {
+  // Visual cards
+  $('acct-cards').innerHTML = accounts.length ?
+    accounts.map(a => `
+      <div class="acct-card" onclick="showTab('transfers')">
+        <div class="acct-status">${badge(a.status)}</div>
+        <div class="acct-type">${a.account_type}</div>
+        <div class="acct-bal money ${a.balance_cents >= 0 ? 'money-pos' : 'money-neg'}">${fmt(a.balance_cents)}</div>
+        <div class="acct-id">${shortId(a.id)}</div>
+      </div>
+    `).join('') :
+    '<div class="empty-state" style="grid-column:1/-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M1 10h22"/></svg><h3>No accounts yet</h3><p>Open your first checking or savings account to get started.</p></div>';
+
+  // Table
+  $('acct-tbody').innerHTML = accounts.length ?
+    accounts.map(a => `<tr>
+      <td><span style="font-family:var(--mono);font-size:0.72rem">${shortId(a.id)}</span></td>
+      <td>${badge(a.account_type)}</td>
+      <td>${badge(a.status)}</td>
+      <td class="money ${a.balance_cents >= 0 ? 'money-pos' : 'money-neg'}">${fmt(a.balance_cents)}</td>
+      <td style="color:var(--muted)">${dateFmt(a.created_at)}</td>
+      <td>
+        ${a.status === 'active' ? `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();chgAcct('${a.id}','frozen')">Freeze</button>` : ''}
+        ${a.status === 'frozen' ? `<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();chgAcct('${a.id}','active')">Activate</button>` : ''}
+        ${a.status !== 'closed' ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmClose('${a.id}','${a.account_type}')">Close</button>` : ''}
+      </td>
+    </tr>`).join('') :
+    '<tr class="empty-row"><td colspan="6">No accounts</td></tr>';
+
+  if (accounts.length) {
+    enableTab('transfers'); enableTab('cards'); enableTab('statements'); enableTab('dashboard');
+  }
+}
+
+async function doCreateAcct() {
+  showLoading();
+  try {
+    await api('POST', '/accounts', { account_type: $('new-acct-type').value });
+    toast('Account opened!', 'success');
+    loadAccounts();
+    updateSteps('transfers');
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+async function chgAcct(id, s) {
+  showLoading();
+  try { await api('PATCH', `/accounts/${id}`, { status: s }); toast(`Account ${s}`, 'success'); loadAccounts(); }
+  catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+function confirmClose(id, type) {
+  confirm_('Close Account', `Are you sure you want to close this ${type} account? This action cannot be undone.`, 'Close Account', 'btn-danger', () => chgAcct(id, 'closed'));
+}
+
+// ===== POPULATE SELECTS =====
+function popSelects() {
+  const active = accounts.filter(x => x.status === 'active');
+  const all = accounts;
+  const optActive = active.map(x => `<option value="${x.id}">${x.account_type} (${fmt(x.balance_cents)})</option>`).join('');
+  const optAll = all.map(x => `<option value="${x.id}">${x.account_type} (${fmt(x.balance_cents)}) ${x.status !== 'active' ? '[' + x.status + ']' : ''}</option>`).join('');
+  ['dep-acct', 'xfer-from', 'xfer-to', 'card-acct'].forEach(id => { if ($(id)) $(id).innerHTML = optActive; });
+  ['txn-acct', 'stmt-acct', 'stmt-list-acct'].forEach(id => { if ($(id)) $(id).innerHTML = optAll; });
+}
+
+// ===== TRANSFER TABS =====
+function showXferTab(tab) {
+  ['deposit', 'transfer', 'history', 'all-transfers'].forEach(t => {
+    const el = $(`xfer-${t}`);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  $('xfer-tabs').querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['deposit', 'transfer', 'history', 'all-transfers'][i] === tab);
+  });
+  if (tab === 'history') loadTxns();
+  if (tab === 'all-transfers') loadAllTransfers();
+}
+
+// ===== DEPOSITS & TRANSFERS =====
+async function doDeposit() {
+  const cents = Math.round(parseFloat($('dep-amt').value) * 100);
+  if (!cents || cents <= 0) return toast('Enter a valid amount', 'danger');
+  showLoading();
+  try {
+    await api('POST', `/accounts/${$('dep-acct').value}/deposit`, { amount_cents: cents });
+    toast(`Deposited ${fmt(cents)}!`, 'success');
+    $('dep-amt').value = '';
+    loadAccounts().then(popSelects);
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+async function doTransfer() {
+  const cents = Math.round(parseFloat($('xfer-amt').value) * 100);
+  if (!cents || cents <= 0) return toast('Enter a valid amount', 'danger');
+  if ($('xfer-from').value === $('xfer-to').value) return toast('Cannot transfer to same account', 'danger');
+  showLoading();
+  try {
+    await api('POST', '/transfers', {
+      source_account_id: $('xfer-from').value,
+      destination_account_id: $('xfer-to').value,
+      amount_cents: cents,
+      idempotency_key: uid(),
+    });
+    toast(`Transferred ${fmt(cents)}!`, 'success');
+    $('xfer-amt').value = '';
+    loadAccounts().then(popSelects);
+    updateSteps('cards');
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+async function loadTxns() {
+  const id = $('txn-acct')?.value;
+  if (!id) return;
+  try {
+    const { data } = await api('GET', `/accounts/${id}/transactions`);
+    $('txn-tbody').innerHTML = data.length ?
+      data.map(t => `<tr>
+        <td>${badge(t.type)}</td>
+        <td class="money ${['credit','deposit'].includes(t.type) ? 'money-pos' : 'money-neg'}">${['credit','deposit'].includes(t.type) ? '+' : '-'}${fmt(t.amount_cents)}</td>
+        <td>${t.description || '-'}</td>
+        <td style="color:var(--muted)">${timeFmt(t.created_at)}</td>
+      </tr>`).join('') :
+      '<tr class="empty-row"><td colspan="4">No transactions</td></tr>';
+  } catch(_) {}
+}
+
+async function loadAllTransfers() {
+  try {
+    const { data } = await api('GET', '/transfers');
+    allTransfers = data;
+    $('transfer-tbody').innerHTML = data.length ?
+      data.map(t => `<tr>
+        <td><span style="font-family:var(--mono);font-size:0.72rem">${shortId(t.id)}</span></td>
+        <td><span style="font-family:var(--mono);font-size:0.72rem">${shortId(t.source_account_id)}</span></td>
+        <td><span style="font-family:var(--mono);font-size:0.72rem">${shortId(t.destination_account_id)}</span></td>
+        <td class="money">${fmt(t.amount_cents)}</td>
+        <td style="color:var(--muted)">${timeFmt(t.created_at)}</td>
+      </tr>`).join('') :
+      '<tr class="empty-row"><td colspan="5">No transfers yet</td></tr>';
+  } catch(_) {}
+}
+
+// ===== CARDS =====
+function renderCCVisual(c) {
+  const masked = c.card_number.replace(/(.{4})/g, '$1 ').trim().replace(/.(?=.{5})/g, function(m, i) { return i < c.card_number.length - 5 ? '\u2022' : m; });
+  const displayNum = '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + c.card_number.slice(-4);
+  return `<div class="cc-visual">
+    <div class="cc-brand">DEBIT</div>
+    <div class="cc-chip"></div>
+    <div class="cc-number">${displayNum}</div>
+    <div class="cc-bottom">
+      <div class="cc-name">${holderData ? holderData.first_name + ' ' + holderData.last_name : 'CARDHOLDER'}</div>
+      <div class="cc-expiry"><span>Valid Thru</span>${c.expiry_date}</div>
+    </div>
+  </div>`;
+}
+
+async function doIssueCard() {
+  const acctId = $('card-acct')?.value;
+  if (!acctId) return toast('Select an account first', 'danger');
+  showLoading();
+  try {
+    await api('POST', `/accounts/${acctId}/cards`);
+    toast('Card issued!', 'success');
+    loadCards();
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+async function loadCards() {
+  allCards = [];
+  for (const a of accounts) {
+    try {
+      const { data } = await api('GET', `/accounts/${a.id}/cards`);
+      allCards.push(...data);
+    } catch(_) {}
+  }
   renderCards();
 }
-function renderCards(){
-  $('card-tbody').innerHTML=allCards.map(c=>`<tr>
-    <td style="font-family:monospace">****${c.card_number.slice(-4)}</td>
-    <td style="font-size:0.75rem">${c.account_id.slice(0,8)}...</td>
-    <td>${badge(c.status)}</td><td>${c.expiry_date}</td>
-    <td>${c.status==='active'?`<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','blocked')">Block</button>`:''}
-    ${c.status==='blocked'?`<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','active')">Activate</button>`:''}
-    ${c.status!=='cancelled'?`<button class="btn btn-danger btn-sm" onclick="chgCard('${c.id}','cancelled')">Cancel</button>`:''}</td>
-  </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No cards</td></tr>';
-  const ac=allCards.filter(c=>c.status==='active');
-  $('spend-card').innerHTML=ac.map(c=>`<option value="${c.id}">****${c.card_number.slice(-4)}</option>`).join('');
-}
-async function chgCard(id,s){try{await api('PATCH',`/cards/${id}`,{status:s});loadCards()}catch(e){alert_('card-alert',e.message,'danger')}}
-async function doSpend(){
-  try{const c=Math.round(parseFloat($('spend-amt').value)*100);
-    await api('POST',`/cards/${$('spend-card').value}/spend`,{amount_cents:c,merchant:$('spend-merch').value,idempotency_key:uid()});
-    alert_('spend-alert',`Charged ${fmt(c)}!`,'success');$('spend-amt').value='';$('spend-merch').value='';
-    loadAccounts().then(popSelects);updateSteps('statements');
-  }catch(e){alert_('spend-alert',e.message,'danger')}
+
+function renderCards() {
+  // Visual cards
+  const activeCards = allCards.filter(c => c.status === 'active');
+  $('cards-visual').innerHTML = activeCards.length ?
+    activeCards.map(c => renderCCVisual(c)).join('') :
+    '';
+
+  // Table
+  $('card-tbody').innerHTML = allCards.length ?
+    allCards.map(c => `<tr>
+      <td style="font-family:var(--mono)">****${c.card_number.slice(-4)}</td>
+      <td><span style="font-family:var(--mono);font-size:0.72rem">${shortId(c.account_id)}</span></td>
+      <td>${badge(c.status)}</td>
+      <td>${c.expiry_date}</td>
+      <td>
+        ${c.status === 'active' ? `<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','blocked')">Block</button>` : ''}
+        ${c.status === 'blocked' ? `<button class="btn btn-outline btn-sm" onclick="chgCard('${c.id}','active')">Activate</button>` : ''}
+        ${c.status !== 'cancelled' ? `<button class="btn btn-danger btn-sm" onclick="confirmCancelCard('${c.id}','${c.card_number.slice(-4)}')">Cancel</button>` : ''}
+      </td>
+    </tr>`).join('') :
+    '<tr class="empty-row"><td colspan="5">No cards issued</td></tr>';
+
+  // Spend card select
+  $('spend-card').innerHTML = activeCards.map(c => `<option value="${c.id}">****${c.card_number.slice(-4)}</option>`).join('');
 }
 
-// Statements
-async function doGenStmt(){
-  try{const{data}=await api('POST',`/accounts/${$('stmt-acct').value}/statements`,{start_date:$('stmt-start').value,end_date:$('stmt-end').value});
-    alert_('stmt-alert',`Statement: ${data.transaction_count} transactions`,'success');loadStmts();
-  }catch(e){alert_('stmt-alert',e.message,'danger')}
-}
-async function loadStmts(){
-  const id=$('stmt-acct')?.value;if(!id)return;
-  try{const{data}=await api('GET',`/accounts/${id}/statements`);
-    $('stmt-tbody').innerHTML=data.map(s=>`<tr>
-      <td>${s.start_date} to ${s.end_date}</td>
-      <td class="money">${fmt(s.opening_balance_cents)}</td>
-      <td class="money money-pos">+${fmt(s.total_credits_cents)}</td>
-      <td class="money money-neg">-${fmt(s.total_debits_cents)}</td>
-      <td class="money" style="font-weight:700">${fmt(s.closing_balance_cents)}</td>
-      <td>${s.transaction_count}</td>
-    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">No statements</td></tr>';
-  }catch(_){}
+async function chgCard(id, s) {
+  showLoading();
+  try { await api('PATCH', `/cards/${id}`, { status: s }); toast(`Card ${s}`, 'success'); loadCards(); }
+  catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
 }
 
-// Ops Panel
-function toggleOps(){$('ops-panel').classList.toggle('show')}
-function renderOps(){
-  $('ops-tbody').innerHTML=opsLog.slice(0,50).map(r=>{
-    const c=r.status<300?'s2':r.status<500?'s4':'s5';
-    return`<tr><td>${r.t}</td><td>${r.method}</td><td>${r.path}</td><td class="${c}">${r.status}</td><td>${r.ms}</td><td style="font-size:0.65rem">${r.rid}</td></tr>`;
+function confirmCancelCard(id, last4) {
+  confirm_('Cancel Card', `Permanently cancel card ending in ${last4}? This cannot be undone.`, 'Cancel Card', 'btn-danger', () => chgCard(id, 'cancelled'));
+}
+
+async function doSpend() {
+  const cents = Math.round(parseFloat($('spend-amt').value) * 100);
+  if (!cents || cents <= 0) return toast('Enter a valid amount', 'danger');
+  if (!$('spend-merch').value.trim()) return toast('Enter a merchant name', 'danger');
+  showLoading();
+  try {
+    await api('POST', `/cards/${$('spend-card').value}/spend`, {
+      amount_cents: cents,
+      merchant: $('spend-merch').value.trim(),
+      idempotency_key: uid(),
+    });
+    toast(`Charged ${fmt(cents)} at ${$('spend-merch').value}`, 'success');
+    $('spend-amt').value = '';
+    $('spend-merch').value = '';
+    loadAccounts().then(popSelects);
+    updateSteps('statements');
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+// ===== STATEMENTS =====
+async function doGenStmt() {
+  const acctId = $('stmt-acct')?.value;
+  const start = $('stmt-start')?.value;
+  const end = $('stmt-end')?.value;
+  if (!acctId || !start || !end) return toast('Fill in all statement fields', 'danger');
+  showLoading();
+  try {
+    const { data } = await api('POST', `/accounts/${acctId}/statements`, { start_date: start, end_date: end });
+    toast(`Statement generated: ${data.transaction_count} transactions`, 'success');
+
+    // Show detail
+    $('stmt-detail-card').style.display = '';
+    $('stmt-detail').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+        <div><div class="stat-label">Period</div><div style="font-weight:600">${dateFmt(data.start_date)} - ${dateFmt(data.end_date)}</div></div>
+        <div><div class="stat-label">Transactions</div><div style="font-weight:600">${data.transaction_count}</div></div>
+        <div><div class="stat-label">Opening Balance</div><div class="money money-lg">${fmt(data.opening_balance_cents)}</div></div>
+        <div><div class="stat-label">Closing Balance</div><div class="money money-lg" style="font-weight:800">${fmt(data.closing_balance_cents)}</div></div>
+        <div><div class="stat-label">Total Credits</div><div class="money money-pos">+${fmt(data.total_credits_cents)}</div></div>
+        <div><div class="stat-label">Total Debits</div><div class="money money-neg">-${fmt(data.total_debits_cents)}</div></div>
+      </div>
+    `;
+    loadStmts();
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+async function loadStmts() {
+  const id = $('stmt-list-acct')?.value;
+  if (!id) return;
+  try {
+    const { data } = await api('GET', `/accounts/${id}/statements`);
+    $('stmt-tbody').innerHTML = data.length ?
+      data.map(s => `<tr>
+        <td>${dateFmt(s.start_date)} - ${dateFmt(s.end_date)}</td>
+        <td class="money">${fmt(s.opening_balance_cents)}</td>
+        <td class="money money-pos">+${fmt(s.total_credits_cents)}</td>
+        <td class="money money-neg">-${fmt(s.total_debits_cents)}</td>
+        <td class="money" style="font-weight:700">${fmt(s.closing_balance_cents)}</td>
+        <td>${s.transaction_count}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="viewStatement('${s.id}')">View</button></td>
+      </tr>`).join('') :
+      '<tr class="empty-row"><td colspan="7">No statements</td></tr>';
+  } catch(_) {}
+}
+
+async function viewStatement(stmtId) {
+  showLoading();
+  try {
+    const { data } = await api('GET', `/statements/${stmtId}`);
+    $('stmt-detail-card').style.display = '';
+    $('stmt-detail').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+        <div><div class="stat-label">Period</div><div style="font-weight:600">${dateFmt(data.start_date)} - ${dateFmt(data.end_date)}</div></div>
+        <div><div class="stat-label">Transactions</div><div style="font-weight:600">${data.transaction_count}</div></div>
+        <div><div class="stat-label">Opening Balance</div><div class="money money-lg">${fmt(data.opening_balance_cents)}</div></div>
+        <div><div class="stat-label">Closing Balance</div><div class="money money-lg" style="font-weight:800">${fmt(data.closing_balance_cents)}</div></div>
+        <div><div class="stat-label">Total Credits</div><div class="money money-pos">+${fmt(data.total_credits_cents)}</div></div>
+        <div><div class="stat-label">Total Debits</div><div class="money money-neg">-${fmt(data.total_debits_cents)}</div></div>
+      </div>
+    `;
+  } catch(e) { toast(e.message, 'danger'); }
+  finally { hideLoading(); }
+}
+
+// ===== OPS PANEL =====
+function toggleOps() { $('ops-panel').classList.toggle('show'); }
+function renderOps() {
+  $('ops-count').textContent = `${opsLog.length} request${opsLog.length !== 1 ? 's' : ''}`;
+  $('ops-tbody').innerHTML = opsLog.slice(0, 100).map(r => {
+    const c = r.status < 300 ? 's2' : r.status < 400 ? 's3' : r.status < 500 ? 's4' : 's5';
+    return `<tr><td>${r.t}</td><td style="font-weight:600">${r.method}</td><td>${r.path}</td><td class="${c}" style="font-weight:700">${r.status}</td><td>${r.ms}</td><td style="font-size:0.62rem;color:#64748b">${r.rid}</td></tr>`;
   }).join('');
 }
 
-// Init date defaults
-window.addEventListener('DOMContentLoaded',()=>{
-  const today=new Date().toISOString().split('T')[0];
-  const ago=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
-  if($('stmt-end'))$('stmt-end').value=today;
-  if($('stmt-start'))$('stmt-start').value=ago;
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const ago = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  if ($('stmt-end')) $('stmt-end').value = today;
+  if ($('stmt-start')) $('stmt-start').value = ago;
+
+  // Enter key submits forms
+  $('signup-password').addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+  $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 });
 </script>
 </body>

@@ -1,19 +1,32 @@
 # Multi-stage build for production-ready banking service
+
+# Stage 1: Builder — install Python dependencies
 FROM python:3.12-slim AS builder
 
 WORKDIR /build
 COPY pyproject.toml .
 RUN pip install --no-cache-dir uv && \
-    uv pip install --system --no-cache -r <(uv pip compile pyproject.toml)
+    uv pip compile pyproject.toml -o requirements.txt && \
+    uv pip install --system --no-cache -r requirements.txt
 
+# Stage 2: Runtime — lean image with app code + deps
 FROM python:3.12-slim AS runtime
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
+
+# Copy installed packages and binaries from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
-COPY . .
+
+# Copy application code + static assets (frontend served by FastAPI)
+COPY app/ ./app/
+COPY static/ ./static/
+COPY pyproject.toml .
+
+# Create data directory for SQLite database
+RUN mkdir -p /app/data
 
 RUN chown -R appuser:appuser /app
 USER appuser
