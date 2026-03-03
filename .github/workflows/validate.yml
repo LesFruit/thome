@@ -1,0 +1,41 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv run --with ruff ruff check app/ tests/
+      - run: uv run --with ruff ruff format --check app/ tests/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - name: Run test suite with coverage
+        run: >
+          uv run --with pytest,httpx,email-validator,pytest-cov
+          pytest tests/ -v
+          --cov=app --cov-report=term-missing
+          --cov-fail-under=80
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build
+      - name: Smoke test container
+        run: |
+          docker compose up -d
+          sleep 5
+          curl -sf http://localhost:8000/health | grep -q healthy
+          curl -sf http://localhost:8000/ready  | grep -q ready
+          docker compose down
