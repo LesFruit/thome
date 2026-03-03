@@ -76,6 +76,8 @@ def record():
 
         # ── 2. Sign up ───────────────────────────────────────────────
         print("  2/12  Signing up...")
+        page.locator("#auth-tab-signup").click()
+        pause(0.5)
         page.locator("#signup-email").fill(DEMO_EMAIL)
         pause(0.5)
         page.locator("#signup-password").fill(DEMO_PASSWORD)

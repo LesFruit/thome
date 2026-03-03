@@ -404,27 +404,30 @@ tr:hover td { background: var(--card-hover); }
 
   <!-- AUTH SECTION -->
   <div class="section active" id="section-auth">
-    <div class="page-hdr"><h2>Welcome</h2><p>Sign up for a new account or log in to your existing one.</p></div>
-    <div class="grid-2">
+    <div class="page-hdr"><h2>Welcome</h2><p>Access your banking dashboard.</p></div>
+    <div style="max-width:420px;margin:0 auto">
       <div class="card">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          Sign Up
+        <!-- Tab toggle -->
+        <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:1.2rem">
+          <button class="btn" id="auth-tab-login" onclick="showAuthMode('login')" style="flex:1;border-radius:0;border-bottom:2px solid var(--primary);margin-bottom:-2px;font-weight:600">Log In</button>
+          <button class="btn" id="auth-tab-signup" onclick="showAuthMode('signup')" style="flex:1;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted)">Sign Up</button>
         </div>
-        <div class="form-row"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
-        <div class="form-row"><label>Password</label><input type="password" id="signup-password" placeholder="StrongPass1!">
-          <div class="hint">Min 8 chars, uppercase, number, special character</div>
+        <!-- Login form (default) -->
+        <div id="auth-login">
+          <div class="form-row"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+          <div class="form-row"><label>Password</label><input type="password" id="login-password" placeholder="Your password"></div>
+          <button class="btn btn-primary btn-block" onclick="doLogin()" id="btn-login">Log In</button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.82rem;color:var(--muted)">Don't have an account? <a href="#" onclick="showAuthMode('signup');return false" style="color:var(--primary)">Sign up</a></p>
         </div>
-        <button class="btn btn-primary btn-block" onclick="doSignup()" id="btn-signup">Create Account</button>
-      </div>
-      <div class="card">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-          Log In
+        <!-- Signup form (hidden) -->
+        <div id="auth-signup" style="display:none">
+          <div class="form-row"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
+          <div class="form-row"><label>Password</label><input type="password" id="signup-password" placeholder="StrongPass1!">
+            <div class="hint">Min 8 chars, uppercase, number, special character</div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="doSignup()" id="btn-signup">Create Account</button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.82rem;color:var(--muted)">Already have an account? <a href="#" onclick="showAuthMode('login');return false" style="color:var(--primary)">Log in</a></p>
         </div>
-        <div class="form-row"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-        <div class="form-row"><label>Password</label><input type="password" id="login-password"></div>
-        <button class="btn btn-primary btn-block" onclick="doLogin()" id="btn-login">Log In</button>
       </div>
     </div>
   </div>
@@ -795,6 +798,17 @@ function setLoggedIn(email) {
 }
 
 // ===== AUTH =====
+function showAuthMode(mode) {
+  $('auth-login').style.display = mode === 'login' ? 'block' : 'none';
+  $('auth-signup').style.display = mode === 'signup' ? 'block' : 'none';
+  $('auth-tab-login').style.borderBottomColor = mode === 'login' ? 'var(--primary)' : 'transparent';
+  $('auth-tab-login').style.color = mode === 'login' ? '' : 'var(--muted)';
+  $('auth-tab-login').style.fontWeight = mode === 'login' ? '600' : '400';
+  $('auth-tab-signup').style.borderBottomColor = mode === 'signup' ? 'var(--primary)' : 'transparent';
+  $('auth-tab-signup').style.color = mode === 'signup' ? '' : 'var(--muted)';
+  $('auth-tab-signup').style.fontWeight = mode === 'signup' ? '600' : '400';
+}
+
 async function doSignup() {
   const email = $('signup-email').value.trim();
   const password = $('signup-password').value;
@@ -803,6 +817,7 @@ async function doSignup() {
   try {
     const { data } = await api('POST', '/auth/signup', { email, password });
     toast(`Account created for ${data.email}! Log in below.`, 'success');
+    showAuthMode('login');
     $('login-email').value = email;
     $('login-password').focus();
   } catch(e) { toast(e.message, 'danger'); }
