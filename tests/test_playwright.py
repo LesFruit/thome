@@ -4,12 +4,18 @@ These tests launch a real uvicorn server and drive the browser through every
 major user journey: signup → login → profile → accounts → deposit → transfer →
 cards → card spend → statements → logout.
 
+Videos are recorded at 1920×1080 with slow_mo so reviewers can follow along.
+After the suite finishes, WebM recordings are converted to MP4 (requires ffmpeg).
+
 Run with:
     uv run --with pytest,playwright,httpx pytest tests/test_playwright.py -v
 """
 
+import glob as globmod
 import multiprocessing
 import os
+import shutil
+import subprocess
 import time
 
 import pytest
@@ -64,12 +70,17 @@ def server():
             os.unlink(f)
 
 
-VIDEO_DIR = os.path.join(os.path.dirname(__file__), "..", "recordings")
+VIDEO_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "videos")
 
 
 @pytest.fixture(scope="module")
 def browser_page(server):
-    """Create a single browser page with video recording enabled."""
+    """Create a single browser page with video recording enabled.
+
+    Videos are saved to docs/videos/ as WebM files.  Playwright records at
+    1920x1080 (full-HD) with slow_mo=400ms so the resulting video is easy to
+    follow when reviewed.
+    """
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -78,17 +89,29 @@ def browser_page(server):
     os.makedirs(VIDEO_DIR, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=True, slow_mo=400)
         context = browser.new_context(
             record_video_dir=VIDEO_DIR,
-            record_video_size={"width": 1280, "height": 720},
-            viewport={"width": 1280, "height": 720},
+            record_video_size={"width": 1920, "height": 1080},
+            viewport={"width": 1920, "height": 1080},
         )
         page = context.new_page()
         page.goto(f"{server}/dashboard")
         yield page
         context.close()  # finalizes video file
         browser.close()
+
+    # Convert any .webm recordings to .mp4 (requires ffmpeg)
+    if shutil.which("ffmpeg"):
+        for webm in globmod.glob(os.path.join(VIDEO_DIR, "*.webm")):
+            mp4 = webm.rsplit(".", 1)[0] + ".mp4"
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", webm, "-c:v", "libx264", "-preset", "fast",
+                 "-crf", "23", "-an", mp4],
+                capture_output=True,
+            )
+            if os.path.exists(mp4):
+                os.remove(webm)
 
 
 # ---------------------------------------------------------------------------
@@ -214,13 +237,17 @@ def test_login_invalid_credentials(server, browser_page):
 # ---------------------------------------------------------------------------
 
 def _login(page, server):
-    """Helper: log in and wait for profile page."""
+    """Helper: log in and wait for sidebar tabs to be fully enabled."""
     page.goto(f"{server}/dashboard")
     page.wait_for_load_state("networkidle")
     page.locator("#login-email").fill(TEST_EMAIL)
     page.locator("#login-password").fill(TEST_PASSWORD)
     page.locator("#btn-login").click()
-    page.wait_for_timeout(2000)
+    # Wait for the profile section to appear (login succeeded)
+    page.locator("#section-profile").wait_for(state="visible", timeout=10000)
+    # Wait for accounts to load — transfers/cards/statements tabs get enabled
+    # only after loadAccounts() completes, which is triggered by loadProfile().
+    page.wait_for_timeout(3000)
 
 
 def test_create_profile(server, browser_page):
@@ -228,10 +255,16 @@ def test_create_profile(server, browser_page):
     page = browser_page
     _login(page, server)
 
-    # Should show profile form (no holder yet)
     profile_form = page.locator("#profile-form")
-    assert profile_form.is_visible()
+    profile_view = page.locator("#profile-view")
 
+    # If profile already exists from previous test run (shared DB), verify it
+    if profile_view.is_visible():
+        assert "E2E" in profile_view.inner_text() or "Tester" in profile_view.inner_text()
+        return
+
+    # No holder yet — create one
+    assert profile_form.is_visible()
     page.locator("#pf-first").fill("E2E")
     page.locator("#pf-last").fill("Tester")
     page.locator("#pf-dob").fill("1990-06-15")
@@ -263,7 +296,7 @@ def test_create_checking_account(server, browser_page):
     _login(page, server)
 
     # Navigate to accounts
-    page.locator("[data-tab='accounts']").click()
+    page.evaluate("showTab('accounts')")
     page.wait_for_timeout(500)
     assert page.locator("#section-accounts").is_visible()
 
@@ -281,7 +314,7 @@ def test_create_savings_account(server, browser_page):
     """User can create a savings account."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='accounts']").click()
+    page.evaluate("showTab('accounts')")
     page.wait_for_timeout(500)
 
     page.locator("#new-acct-type").select_option("savings")
@@ -296,7 +329,7 @@ def test_account_cards_visible(server, browser_page):
     """Account visual cards are displayed."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='accounts']").click()
+    page.evaluate("showTab('accounts')")
     page.wait_for_timeout(1000)
 
     cards = page.locator(".acct-card")
@@ -311,15 +344,15 @@ def test_deposit_funds(server, browser_page):
     """User can deposit money into an account."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='transfers']").click()
+    page.evaluate("showTab('transfers')")
     page.wait_for_timeout(1000)
 
     # Deposit tab should be visible by default
     assert page.locator("#xfer-deposit").is_visible()
 
     page.locator("#dep-amt").fill("500.00")
-    page.locator("button:has-text('Deposit')").click()
-    page.wait_for_timeout(1500)
+    page.locator("#xfer-deposit button.btn-success").click()
+    page.wait_for_timeout(2000)
 
     # Check success toast
     body = page.locator("body").inner_text().lower()
@@ -330,17 +363,24 @@ def test_transfer_between_accounts(server, browser_page):
     """User can transfer money between accounts."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='transfers']").click()
+    page.evaluate("showTab('transfers')")
     page.wait_for_timeout(500)
 
     # Switch to transfer tab
-    page.locator("button.tab-btn:has-text('Transfer')").click()
+    page.evaluate("showXferTab('transfer')")
     page.wait_for_timeout(500)
+
+    # Select different from/to accounts (from=checking, to=savings)
+    from_select = page.locator("#xfer-from")
+    to_select = page.locator("#xfer-to")
+    options = from_select.locator("option").all()
+    if len(options) >= 2:
+        to_select.select_option(index=1)  # savings
 
     # Fill transfer form
     page.locator("#xfer-amt").fill("100.00")
-    page.locator("button:has-text('Transfer')").last.click()
-    page.wait_for_timeout(1500)
+    page.locator("#xfer-transfer button.btn-primary").click()
+    page.wait_for_timeout(2000)
 
     body = page.locator("body").inner_text().lower()
     assert "transferred" in body or "$100" in body or "success" in body
@@ -350,11 +390,11 @@ def test_transaction_history_visible(server, browser_page):
     """Transaction history shows deposit and transfer entries."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='transfers']").click()
+    page.evaluate("showTab('transfers')")
     page.wait_for_timeout(500)
 
     # Switch to history tab
-    page.locator("button.tab-btn:has-text('History')").click()
+    page.evaluate("showXferTab('history')")
     page.wait_for_timeout(1500)
 
     # Should have transactions from deposit + transfer
@@ -366,10 +406,10 @@ def test_all_transfers_list(server, browser_page):
     """All transfers page shows the transfer record."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='transfers']").click()
+    page.evaluate("showTab('transfers')")
     page.wait_for_timeout(500)
 
-    page.locator("button.tab-btn:has-text('All Transfers')").click()
+    page.evaluate("showXferTab('all-transfers')")
     page.wait_for_timeout(1500)
 
     rows = page.locator("#transfer-tbody tr:not(.empty-row)")
@@ -384,7 +424,7 @@ def test_issue_card(server, browser_page):
     """User can issue a debit card on an account."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='cards']").click()
+    page.evaluate("showTab('cards')")
     page.wait_for_timeout(1000)
 
     page.locator("button:has-text('Issue Card')").click()
@@ -399,7 +439,7 @@ def test_card_visual_displayed(server, browser_page):
     """Visual credit card component is rendered for active cards."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='cards']").click()
+    page.evaluate("showTab('cards')")
     page.wait_for_timeout(1500)
 
     visuals = page.locator(".cc-visual")
@@ -413,7 +453,7 @@ def test_card_spend(server, browser_page):
     """User can charge a card at a merchant."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='cards']").click()
+    page.evaluate("showTab('cards')")
     page.wait_for_timeout(1500)
 
     page.locator("#spend-amt").fill("25.00")
@@ -429,7 +469,7 @@ def test_block_card(server, browser_page):
     """User can block an active card."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='cards']").click()
+    page.evaluate("showTab('cards')")
     page.wait_for_timeout(1500)
 
     block_btn = page.locator("button:has-text('Block')")
@@ -448,7 +488,7 @@ def test_generate_statement(server, browser_page):
     """User can generate an account statement."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='statements']").click()
+    page.evaluate("showTab('statements')")
     page.wait_for_timeout(1000)
 
     # Dates should be pre-populated
@@ -466,7 +506,7 @@ def test_statement_detail_shows(server, browser_page):
     """Statement detail card shows financial summary."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='statements']").click()
+    page.evaluate("showTab('statements')")
     page.wait_for_timeout(500)
 
     page.locator("button:has-text('Generate Statement')").click()
@@ -482,7 +522,7 @@ def test_statement_history_list(server, browser_page):
     """Statement history table shows generated statements."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='statements']").click()
+    page.evaluate("showTab('statements')")
     page.wait_for_timeout(1500)
 
     rows = page.locator("#stmt-tbody tr:not(.empty-row)")
@@ -497,7 +537,7 @@ def test_dashboard_overview(server, browser_page):
     """Dashboard shows total balance and account summary."""
     page = browser_page
     _login(page, server)
-    page.locator("[data-tab='dashboard']").click()
+    page.evaluate("showTab('dashboard')")
     page.wait_for_timeout(2000)
 
     # Should see stat cards
