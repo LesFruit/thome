@@ -1,9 +1,12 @@
 """FastAPI application factory and lifecycle management."""
 
 import logging
+import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.database import init_db, dispose_db
@@ -48,3 +51,13 @@ app.include_router(accounts.router)
 app.include_router(transfers.router)
 app.include_router(cards.router)
 app.include_router(statements.router)
+
+# --- Static files + dashboard ---
+_static = pathlib.Path(__file__).resolve().parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static)), name="static")
+
+
+@app.get("/dashboard")
+@app.get("/dashboard/")
+async def dashboard():
+    return FileResponse(str(_static / "index.html"))

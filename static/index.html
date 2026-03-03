@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banking Service Dashboard</title>
+<style>
+  :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f8fafc; --card: #fff; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+  .header { background: var(--primary); color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 1.25rem; }
+  .header .user-info { font-size: 0.875rem; }
+  .layout { display: flex; min-height: calc(100vh - 56px); }
+  .sidebar { width: 220px; background: var(--card); border-right: 1px solid var(--border); padding: 1rem 0; }
+  .sidebar a { display: block; padding: 0.75rem 1.5rem; color: var(--text); text-decoration: none; font-size: 0.875rem; border-left: 3px solid transparent; }
+  .sidebar a:hover, .sidebar a.active { background: #f1f5f9; border-left-color: var(--primary); color: var(--primary); }
+  .main { flex: 1; padding: 2rem; max-width: 900px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card h2 { font-size: 1rem; margin-bottom: 1rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; }
+  .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--muted); }
+  .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+  .badge-success { background: #dcfce7; color: #166534; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-danger { background: #fee2e2; color: #991b1b; }
+  .ops-panel { position: fixed; right: 0; top: 56px; width: 350px; height: calc(100vh - 56px); background: #1e293b; color: #e2e8f0; padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.75rem; transform: translateX(100%); transition: transform 0.3s; }
+  .ops-panel.open { transform: translateX(0); }
+  .ops-toggle { position: fixed; right: 1rem; bottom: 1rem; z-index: 100; }
+  .ops-entry { border-bottom: 1px solid #334155; padding: 0.5rem 0; }
+  .ops-entry .req-id { color: #60a5fa; }
+  .ops-entry .status-ok { color: #4ade80; }
+  .ops-entry .status-err { color: #f87171; }
+  .ops-entry .latency { color: #fbbf24; }
+  .alert { padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem; }
+  .alert-error { background: #fee2e2; color: #991b1b; }
+  .alert-success { background: #dcfce7; color: #166534; }
+  .guide { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+  .guide h3 { font-size: 0.875rem; color: var(--primary); margin-bottom: 0.5rem; }
+  .guide ol { padding-left: 1.25rem; font-size: 0.8rem; color: var(--muted); }
+  .guide li.done { color: var(--success); text-decoration: line-through; }
+  .guide li.current { color: var(--primary); font-weight: 600; }
+  #view { display: none; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Banking Service</h1>
+  <div class="user-info" id="userInfo">Not logged in</div>
+</div>
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <a href="#" data-tab="auth" class="active">Auth</a>
+    <a href="#" data-tab="holder">Holder</a>
+    <a href="#" data-tab="accounts">Accounts</a>
+    <a href="#" data-tab="transfers">Transfers</a>
+    <a href="#" data-tab="cards">Cards</a>
+    <a href="#" data-tab="statements">Statements</a>
+  </nav>
+  <div class="main" id="main">
+    <!-- Guided Flow -->
+    <div class="guide" id="guide">
+      <h3>Guided Flow</h3>
+      <ol>
+        <li id="step-1" class="current">1. Signup / Login</li>
+        <li id="step-2">2. Create Holder Profile</li>
+        <li id="step-3">3. Open Account</li>
+        <li id="step-4">4. Make a Transfer</li>
+        <li id="step-5">5. Card Spend</li>
+        <li id="step-6">6. Generate Statement</li>
+      </ol>
+    </div>
+    <div id="alert"></div>
+
+    <!-- Auth Tab -->
+    <div class="tab" id="tab-auth">
+      <div class="card">
+        <h2>Sign Up</h2>
+        <div class="form-group"><label>Email</label><input id="signup-email" type="email" placeholder="user@example.com"></div>
+        <div class="form-group"><label>Password</label><input id="signup-pass" type="password" placeholder="Min 8 chars"></div>
+        <button class="btn btn-primary" onclick="doSignup()">Sign Up</button>
+      </div>
+      <div class="card">
+        <h2>Login</h2>
+        <div class="form-group"><label>Email</label><input id="login-email" type="email"></div>
+        <div class="form-group"><label>Password</label><input id="login-pass" type="password"></div>
+        <button class="btn btn-primary" onclick="doLogin()">Login</button>
+        <button class="btn btn-danger" onclick="doLogout()" id="logoutBtn" style="display:none;margin-left:0.5rem">Logout</button>
+      </div>
+    </div>
+
+    <!-- Holder Tab -->
+    <div class="tab" id="tab-holder" style="display:none">
+      <div class="card">
+        <h2>Create Account Holder</h2>
+        <div class="form-group"><label>First Name</label><input id="h-first"></div>
+        <div class="form-group"><label>Last Name</label><input id="h-last"></div>
+        <div class="form-group"><label>Date of Birth</label><input id="h-dob" type="date"></div>
+        <button class="btn btn-primary" onclick="createHolder()">Create Holder</button>
+      </div>
+      <div id="holderInfo"></div>
+    </div>
+
+    <!-- Accounts Tab -->
+    <div class="tab" id="tab-accounts" style="display:none">
+      <div class="card">
+        <h2>Open Account</h2>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="acct-type"><option value="checking">Checking</option><option value="savings">Savings</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="createAccount()">Create</button>
+      </div>
+      <div class="card"><h2>Your Accounts</h2><table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Balance</th><th>Actions</th></tr></thead><tbody id="acctList"></tbody></table></div>
+    </div>
+
+    <!-- Transfers Tab -->
+    <div class="tab" id="tab-transfers" style="display:none">
+      <div class="card">
+        <h2>New Transfer</h2>
+        <div class="form-group"><label>From Account</label><select id="xfer-src"></select></div>
+        <div class="form-group"><label>To Account</label><select id="xfer-dst"></select></div>
+        <div class="form-group"><label>Amount (cents)</label><input id="xfer-amt" type="number" min="1"></div>
+        <button class="btn btn-primary" onclick="createTransfer()">Transfer</button>
+      </div>
+      <div class="card"><h2>Transfer History</h2><table><thead><tr><th>ID</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr></thead><tbody id="xferList"></tbody></table></div>
+    </div>
+
+    <!-- Cards Tab -->
+    <div class="tab" id="tab-cards" style="display:none">
+      <div class="card">
+        <h2>Issue Card</h2>
+        <div class="form-group"><label>Account</label><select id="card-acct"></select></div>
+        <button class="btn btn-primary" onclick="issueCard()">Issue Card</button>
+      </div>
+      <div class="card">
+        <h2>Card Spend</h2>
+        <div class="form-group"><label>Card</label><select id="spend-card"></select></div>
+        <div class="form-group"><label>Amount (cents)</label><input id="spend-amt" type="number" min="1"></div>
+        <div class="form-group"><label>Merchant</label><input id="spend-merchant"></div>
+        <button class="btn btn-primary" onclick="cardSpend()">Spend</button>
+      </div>
+      <div class="card"><h2>Your Cards</h2><table><thead><tr><th>ID</th><th>Number</th><th>Status</th><th>Expiry</th></tr></thead><tbody id="cardList"></tbody></table></div>
+    </div>
+
+    <!-- Statements Tab -->
+    <div class="tab" id="tab-statements" style="display:none">
+      <div class="card">
+        <h2>Generate Statement</h2>
+        <div class="form-group"><label>Account</label><select id="stmt-acct"></select></div>
+        <div class="form-group"><label>Start Date</label><input id="stmt-start" type="date"></div>
+        <div class="form-group"><label>End Date</label><input id="stmt-end" type="date"></div>
+        <button class="btn btn-primary" onclick="genStatement()">Generate</button>
+      </div>
+      <div id="stmtResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Ops Panel -->
+<button class="btn btn-primary ops-toggle" onclick="toggleOps()">Ops View</button>
+<div class="ops-panel" id="opsPanel">
+  <h3 style="margin-bottom:0.5rem">Request Log</h3>
+  <div id="opsLog"></div>
+</div>
+
+<script>
+let token = null;
+let refreshToken = null;
+const API = '';
+
+function showAlert(msg, type='error') {
+  const el = document.getElementById('alert');
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => el.innerHTML = '', 5000);
+}
+
+function updateGuide(step) {
+  for (let i = 1; i <= 6; i++) {
+    const el = document.getElementById(`step-${i}`);
+    el.className = i < step ? 'done' : i === step ? 'current' : '';
+  }
+}
+
+async function api(method, path, body=null) {
+  const start = performance.now();
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(API + path, opts);
+  const dur = (performance.now() - start).toFixed(1);
+  const data = await resp.json();
+  const reqId = resp.headers.get('x-request-id') || '-';
+  logOps(method, path, resp.status, dur, reqId);
+  if (!resp.ok && data.error) showAlert(`${data.error.code}: ${data.error.message}`);
+  return { status: resp.status, data };
+}
+
+function logOps(method, path, status, dur, reqId) {
+  const log = document.getElementById('opsLog');
+  const cls = status < 400 ? 'status-ok' : 'status-err';
+  log.innerHTML = `<div class="ops-entry"><span class="req-id">${reqId.substring(0,8)}</span> ${method} ${path} <span class="${cls}">${status}</span> <span class="latency">${dur}ms</span></div>` + log.innerHTML;
+}
+
+function toggleOps() { document.getElementById('opsPanel').classList.toggle('open'); }
+
+// Tab navigation
+document.querySelectorAll('.sidebar a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.sidebar a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+    document.getElementById('tab-' + a.dataset.tab).style.display = 'block';
+  });
+});
+
+async function doSignup() {
+  const { status } = await api('POST', '/api/v1/auth/signup', {
+    email: document.getElementById('signup-email').value,
+    password: document.getElementById('signup-pass').value,
+  });
+  if (status === 201) showAlert('Account created! Now login.', 'success');
+}
+
+async function doLogin() {
+  const { status, data } = await api('POST', '/api/v1/auth/login', {
+    email: document.getElementById('login-email').value,
+    password: document.getElementById('login-pass').value,
+  });
+  if (status === 200) {
+    token = data.access_token;
+    refreshToken = data.refresh_token;
+    document.getElementById('userInfo').textContent = document.getElementById('login-email').value;
+    document.getElementById('logoutBtn').style.display = 'inline';
+    showAlert('Logged in!', 'success');
+    updateGuide(2);
+  }
+}
+
+async function doLogout() {
+  if (refreshToken) await api('POST', '/api/v1/auth/logout', { refresh_token: refreshToken });
+  token = null; refreshToken = null;
+  document.getElementById('userInfo').textContent = 'Not logged in';
+  document.getElementById('logoutBtn').style.display = 'none';
+  updateGuide(1);
+}
+
+async function createHolder() {
+  const { status } = await api('POST', '/api/v1/holders', {
+    first_name: document.getElementById('h-first').value,
+    last_name: document.getElementById('h-last').value,
+    date_of_birth: document.getElementById('h-dob').value,
+  });
+  if (status === 201) { showAlert('Holder created!', 'success'); updateGuide(3); }
+}
+
+async function createAccount() {
+  const { status } = await api('POST', '/api/v1/accounts', { account_type: document.getElementById('acct-type').value });
+  if (status === 201) { showAlert('Account created!', 'success'); loadAccounts(); updateGuide(4); }
+}
+
+async function loadAccounts() {
+  const { data } = await api('GET', '/api/v1/accounts');
+  if (!Array.isArray(data)) return;
+  const tbody = document.getElementById('acctList');
+  tbody.innerHTML = data.map(a => `<tr><td>${a.id.substring(0,8)}</td><td>${a.account_type}</td><td><span class="badge badge-${a.status==='active'?'success':a.status==='frozen'?'warn':'danger'}">${a.status}</span></td><td>$${(a.balance_cents/100).toFixed(2)}</td><td><button class="btn btn-primary" onclick="depositPrompt('${a.id}')" style="font-size:0.7rem">Deposit</button></td></tr>`).join('');
+  // Update selects
+  const opts = data.map(a => `<option value="${a.id}">${a.account_type} (${a.id.substring(0,8)}) $${(a.balance_cents/100).toFixed(2)}</option>`).join('');
+  ['xfer-src','xfer-dst','card-acct','stmt-acct'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = opts; });
+}
+
+async function depositPrompt(acctId) {
+  const amt = prompt('Deposit amount in cents:');
+  if (!amt) return;
+  const { status } = await api('POST', `/api/v1/accounts/${acctId}/deposit`, { amount_cents: parseInt(amt) });
+  if (status === 200) { showAlert('Deposited!', 'success'); loadAccounts(); }
+}
+
+async function createTransfer() {
+  const { status } = await api('POST', '/api/v1/transfers', {
+    source_account_id: document.getElementById('xfer-src').value,
+    destination_account_id: document.getElementById('xfer-dst').value,
+    amount_cents: parseInt(document.getElementById('xfer-amt').value),
+    idempotency_key: crypto.randomUUID(),
+  });
+  if (status === 201) { showAlert('Transfer completed!', 'success'); loadTransfers(); loadAccounts(); updateGuide(5); }
+}
+
+async function loadTransfers() {
+  const { data } = await api('GET', '/api/v1/transfers');
+  if (!Array.isArray(data)) return;
+  document.getElementById('xferList').innerHTML = data.map(t => `<tr><td>${t.id.substring(0,8)}</td><td>${t.source_account_id.substring(0,8)}</td><td>${t.destination_account_id.substring(0,8)}</td><td>$${(t.amount_cents/100).toFixed(2)}</td><td><span class="badge badge-success">${t.status}</span></td></tr>`).join('');
+}
+
+async function issueCard() {
+  const { status } = await api('POST', `/api/v1/accounts/${document.getElementById('card-acct').value}/cards`);
+  if (status === 201) { showAlert('Card issued!', 'success'); loadCards(); }
+}
+
+async function loadCards() {
+  const { data } = await api('GET', '/api/v1/accounts');
+  if (!Array.isArray(data)) return;
+  let allCards = [];
+  for (const a of data) {
+    const r = await api('GET', `/api/v1/accounts/${a.id}/cards`);
+    if (Array.isArray(r.data)) allCards.push(...r.data);
+  }
+  document.getElementById('cardList').innerHTML = allCards.map(c => `<tr><td>${c.id.substring(0,8)}</td><td>${c.card_number}</td><td><span class="badge badge-${c.status==='active'?'success':'danger'}">${c.status}</span></td><td>${c.expiry_date}</td></tr>`).join('');
+  document.getElementById('spend-card').innerHTML = allCards.map(c => `<option value="${c.id}">${c.card_number} (${c.status})</option>`).join('');
+}
+
+async function cardSpend() {
+  const { status } = await api('POST', `/api/v1/cards/${document.getElementById('spend-card').value}/spend`, {
+    amount_cents: parseInt(document.getElementById('spend-amt').value),
+    merchant: document.getElementById('spend-merchant').value,
+    idempotency_key: crypto.randomUUID(),
+  });
+  if (status === 201) { showAlert('Card spend recorded!', 'success'); loadAccounts(); updateGuide(6); }
+}
+
+async function genStatement() {
+  const acctId = document.getElementById('stmt-acct').value;
+  const { status, data } = await api('POST', `/api/v1/accounts/${acctId}/statements`, {
+    start_date: document.getElementById('stmt-start').value,
+    end_date: document.getElementById('stmt-end').value,
+  });
+  if (status === 201) {
+    document.getElementById('stmtResult').innerHTML = `<div class="card"><h2>Statement</h2><table>
+      <tr><th>Period</th><td>${data.start_date} — ${data.end_date}</td></tr>
+      <tr><th>Opening Balance</th><td>$${(data.opening_balance_cents/100).toFixed(2)}</td></tr>
+      <tr><th>Total Credits</th><td>$${(data.total_credits_cents/100).toFixed(2)}</td></tr>
+      <tr><th>Total Debits</th><td>$${(data.total_debits_cents/100).toFixed(2)}</td></tr>
+      <tr><th>Closing Balance</th><td>$${(data.closing_balance_cents/100).toFixed(2)}</td></tr>
+      <tr><th>Transactions</th><td>${data.transaction_count}</td></tr>
+    </table></div>`;
+    showAlert('Statement generated!', 'success');
+  }
+}
+</script>
+</body>
+</html>
