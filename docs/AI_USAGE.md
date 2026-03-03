@@ -181,6 +181,18 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 
 **Tests:** 75+ total (70 API + 5+ E2E expanded to 30), 94% coverage. **Covers:** 4.9 (Docker hardened), 4.10 (frontend comprehensive), 4.13 (E2E expanded), 10.5 (screenshot evidence via BrowserOS).
 
+### Session 14: Frontend Audit, Data Consistency Fixes, E2E Rewrite (2026-03-03)
+
+**Manual audit** of frontend and backend revealed several data consistency bugs that automated AI generation missed:
+
+- **Dashboard "Recent Activity" only loaded first account's transactions** — deposits/transfers on savings account never appeared in the overview. Fixed to aggregate transactions across all accounts, sorted by date.
+- **Card spend didn't refresh transaction history** — after a card charge, the balance updated but the History tab showed stale data until manual page refresh. Same bug existed for deposits and transfers (fixed in same pass). Added `loadTxns()` and `loadAllTransfers()` calls after every balance-changing operation.
+- **Logout didn't reset auth form state** — if user was on the signup tab when logging out, the login form stayed hidden on return. Added `showAuthMode('login')` to logout handler.
+- **Playwright E2E tests used the wrong database** — `multiprocessing.Process` fork inherited the parent's already-initialized `settings` singleton, so the test server connected to `banking.db` (dev data) instead of `test_e2e.db`. Switched to `subprocess.Popen` with explicit env vars for complete process isolation.
+- **Playwright videos didn't tell a story** — 34 tests that each called `_login()` (page reload + 3s wait) produced a repetitive video. Rewrote as 2 narrative tests: "New Customer Journey" (signup → profile → accounts → deposit → transfer → card → spend → statement → dashboard → logout, with edge cases inline) and "Returning Customer" (login → verify persistence → blocked card spend → audit trail → logout).
+
+**Tests:** 72 total (70 API + 2 E2E stories covering 40+ assertions), 94% coverage. **Covers:** 4.10 (frontend bugs fixed), 4.13 (E2E rewritten as story-driven flows).
+
 ## Challenges and Manual Interventions
 
 | Challenge | Resolution | Manual Decision |
@@ -189,18 +201,23 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 | JWT refresh tokens identical within same second | Added `jti` (uuid4) claim to payload | Yes — identified via test failure |
 | SQLite check-then-act race on balance | Used atomic guarded `UPDATE WHERE balance >= amount` | Yes — per REQUIREMENTS.MD caveat |
 | Test isolation | Per-test table create/drop via autouse fixture | Design decision for deterministic tests |
+| Dashboard only showed 1st account activity | Aggregated txns from all accounts, sorted by date | Yes — manual audit caught AI-generated bug |
+| Card spend/deposit/transfer didn't refresh history | Added `loadTxns()`+`loadAllTransfers()` after each | Yes — pattern was inconsistent across operations |
+| Logout left signup form visible | Added `showAuthMode('login')` to logout handler | Yes — edge case missed in original implementation |
+| Playwright used wrong DB via forked singleton | Switched from `multiprocessing` to `subprocess.Popen` | Yes — root cause: `Settings()` already initialized |
+| E2E videos were repetitive, no narrative | Rewrote 34 tests → 2 story-driven flows | Yes — manual decision for reviewer experience |
 
 ## Evidence Summary
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 100 (70 API + 30 E2E) |
+| Total tests | 72 (70 API + 2 E2E stories / 40+ assertions) |
 | Test files | 10 |
 | Coverage | 94% (80% minimum) |
 | TDD cycles (red→green) | 8 |
-| Commits | 18 |
+| Commits | 20 |
 | Lines of app code | ~1200 |
-| Lines of test code | ~1800 |
+| Lines of test code | ~1600 |
 | SLO targets met | 5/5 |
 | Security checklist items | 10/10 |
 | Release gates passed | 10/10 |

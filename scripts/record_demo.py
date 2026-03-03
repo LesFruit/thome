@@ -11,7 +11,6 @@ Requires: playwright browsers installed (playwright install chromium)
           ffmpeg for WebM→MP4 conversion
 """
 
-import multiprocessing
 import os
 import shutil
 import subprocess
@@ -25,15 +24,6 @@ BASE_URL = "http://127.0.0.1:8899"
 
 DEMO_EMAIL = "demo@bankingservice.dev"
 DEMO_PASSWORD = "DemoPass123!"
-
-
-def _run_server():
-    os.chdir(ROOT)
-    sys.path.insert(0, ROOT)
-    os.environ["DATABASE_URL"] = f"sqlite:///{os.path.abspath(DB_PATH)}"
-    os.environ["JWT_SECRET_KEY"] = "demo-recording-secret"
-    import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8899, log_level="warning")
 
 
 def wait_for_server():
@@ -223,10 +213,17 @@ def main():
         if os.path.exists(f):
             os.unlink(f)
 
-    # Start server
+    # Start server as separate process with isolated env
     print("\nStarting server...")
-    proc = multiprocessing.Process(target=_run_server, daemon=True)
-    proc.start()
+    env = {**os.environ,
+           "DATABASE_URL": f"sqlite:///{os.path.abspath(DB_PATH)}",
+           "JWT_SECRET_KEY": "demo-recording-secret"}
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "app.main:app",
+         "--host", "127.0.0.1", "--port", "8899", "--log-level", "warning"],
+        cwd=ROOT, env=env,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
 
     if not wait_for_server():
         proc.terminate()
@@ -240,7 +237,7 @@ def main():
         record()
     finally:
         proc.terminate()
-        proc.join(timeout=5)
+        proc.wait(timeout=5)
         for f in [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm", DB_PATH + "-journal"]:
             if os.path.exists(f):
                 os.unlink(f)

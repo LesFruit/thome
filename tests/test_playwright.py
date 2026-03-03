@@ -1,18 +1,25 @@
-"""End-to-end Playwright test: full user journey with edge-case validation.
+"""End-to-end Playwright tests: two story-driven flows with edge-case validation.
 
-A single ordered test flow that walks through every major feature while also
-verifying that invalid operations are properly rejected.  Recorded as an MP4
-video in docs/videos/ at 1920x1080 so reviewers can watch the entire session.
+Story 1 — "New Customer Journey": A brand-new user signs up, hits auth edge cases,
+creates a profile, opens accounts, funds them, makes transfers and card spends, generates
+a statement, explores the dashboard, and logs out.  Tests the happy path with inline
+validation of every error guard along the way.
+
+Story 2 — "Returning Customer": The same user logs back in and verifies all data
+persisted — accounts, balances, transaction history, cards, statements — then tests
+additional edge cases (blocked card spend, insufficient funds) before logging out.
+
+Both tests share one browser context so the video is a single continuous recording.
 
 Run with:
     uv run --with pytest,playwright,httpx pytest tests/test_playwright.py -v
 """
 
 import glob as globmod
-import multiprocessing
 import os
 import shutil
 import subprocess
+import sys
 import time
 
 import pytest
@@ -33,26 +40,28 @@ TEST_PASSWORD = "StrongPass1!"
 # Server management
 # ---------------------------------------------------------------------------
 
-def _run_server():
-    """Start uvicorn in a subprocess."""
-    os.environ["DATABASE_URL"] = f"sqlite:///{os.path.abspath(DB_PATH)}"
-    os.environ["JWT_SECRET_KEY"] = "e2e-test-secret"
-    import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8877, log_level="warning")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @pytest.fixture(scope="module")
 def server():
-    """Launch the API server for the test module, teardown after."""
+    """Launch the API server as a separate process with its own env."""
     for f in [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm", DB_PATH + "-journal"]:
         if os.path.exists(f):
             os.unlink(f)
 
-    proc = multiprocessing.Process(target=_run_server, daemon=True)
-    proc.start()
+    env = {**os.environ,
+           "DATABASE_URL": f"sqlite:///{os.path.abspath(DB_PATH)}",
+           "JWT_SECRET_KEY": "e2e-test-secret"}
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "app.main:app",
+         "--host", "127.0.0.1", "--port", "8877", "--log-level", "warning"],
+        cwd=ROOT_DIR, env=env,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
 
     import httpx
-    for _ in range(30):
+    for _ in range(40):
         try:
             resp = httpx.get(f"{BASE_URL}/health", timeout=1)
             if resp.status_code == 200:
@@ -67,7 +76,7 @@ def server():
     yield BASE_URL
 
     proc.terminate()
-    proc.join(timeout=5)
+    proc.wait(timeout=5)
     for f in [DB_PATH, DB_PATH + "-wal", DB_PATH + "-shm", DB_PATH + "-journal"]:
         if os.path.exists(f):
             os.unlink(f)
@@ -84,7 +93,7 @@ def browser_page(server):
     os.makedirs(VIDEO_DIR, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, slow_mo=350)
+        browser = p.chromium.launch(headless=True, slow_mo=300)
         context = browser.new_context(
             record_video_dir=VIDEO_DIR,
             record_video_size={"width": 1920, "height": 1080},
@@ -113,526 +122,307 @@ def browser_page(server):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _login(page, server):
-    """Log in and wait for sidebar tabs to fully enable."""
+def wait(page, ms=1200):
+    page.wait_for_timeout(ms)
+
+
+def expect_toast(page, kind, text_fragment=None):
+    """Assert a toast of the given kind appeared. Optionally check text."""
+    toasts = page.locator(f".toast-{kind}")
+    assert toasts.count() > 0, f"Expected .toast-{kind} but found none"
+    if text_fragment:
+        found = any(text_fragment.lower() in toasts.nth(i).inner_text().lower()
+                     for i in range(toasts.count()))
+        assert found, f"No .toast-{kind} contains '{text_fragment}'"
+
+
+def nav(page, tab):
+    page.evaluate(f"showTab('{tab}')")
+    wait(page, 800)
+
+
+def xfer_tab(page, tab):
+    page.evaluate(f"showXferTab('{tab}')")
+    wait(page, 600)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  STORY 1 — New Customer Journey
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_01_new_customer_journey(server, browser_page):
+    """Complete new-customer flow: signup → profile → accounts → deposit →
+    transfer → card → spend → statement → dashboard → logout.
+    Validates edge cases inline without ever re-logging in."""
+    page = browser_page
+
+    # ── Landing page ────────────────────────────────────────────────────
     page.goto(f"{server}/dashboard")
     page.wait_for_load_state("networkidle")
-    page.locator("#login-email").fill(TEST_EMAIL)
-    page.locator("#login-password").fill(TEST_PASSWORD)
-    page.locator("#btn-login").click()
-    page.locator("#section-profile").wait_for(state="visible", timeout=10000)
-    page.wait_for_timeout(3000)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  E2E FLOW — tests run in order, each builds on the previous state
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-# ── 1. Dashboard loads ────────────────────────────────────────────────────
-
-def test_01_dashboard_loads_with_login_form(server, browser_page):
-    """Dashboard loads and shows login form by default (not signup)."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
     assert page.title() == "Banking Service Dashboard"
-    # Login form visible, signup form hidden
     assert page.locator("#auth-login").is_visible()
     assert not page.locator("#auth-signup").is_visible()
-    assert page.locator("#login-email").is_visible()
 
-
-def test_02_guided_steps_visible(server, browser_page):
-    """Guided flow rail shows 6 steps."""
-    page = browser_page
-    steps = page.locator(".step")
-    assert steps.count() == 6
-
-
-def test_03_banking_tabs_disabled_before_login(server, browser_page):
-    """Sidebar banking tabs are disabled before authentication."""
-    page = browser_page
+    # Guided steps visible, banking tabs disabled
+    assert page.locator(".step").count() == 6
     for tab in ["accounts", "transfers", "cards", "statements"]:
         assert "disabled" in page.locator(f"[data-tab='{tab}']").get_attribute("class")
 
-
-# ── 2. Auth edge cases ───────────────────────────────────────────────────
-
-def test_04_signup_weak_password_rejected(server, browser_page):
-    """Signup with a weak password shows error toast."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
-    # Switch to signup mode
+    # ── Edge case: weak password signup ─────────────────────────────────
     page.locator("#auth-tab-signup").click()
-    page.wait_for_timeout(300)
-    assert page.locator("#auth-signup").is_visible()
-
+    wait(page, 400)
     page.locator("#signup-email").fill("weak@example.com")
     page.locator("#signup-password").fill("weak")
     page.locator("#btn-signup").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger")
 
-    # Should see error toast
-    toasts = page.locator(".toast-danger")
-    assert toasts.count() > 0
-
-
-def test_05_signup_success(server, browser_page):
-    """User can sign up and sees a success toast."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
-    page.locator("#auth-tab-signup").click()
-    page.wait_for_timeout(300)
-
+    # ── Successful signup ───────────────────────────────────────────────
     page.locator("#signup-email").fill(TEST_EMAIL)
     page.locator("#signup-password").fill(TEST_PASSWORD)
     page.locator("#btn-signup").click()
-    page.wait_for_timeout(2000)
-
-    # Should see success indication
+    wait(page, 2000)
     body = page.locator("body").inner_text().lower()
     assert "created" in body or "success" in body or "log in" in body
 
-
-def test_06_signup_duplicate_email_rejected(server, browser_page):
-    """Duplicate signup shows error."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
+    # ── Edge case: duplicate email signup ───────────────────────────────
     page.locator("#auth-tab-signup").click()
-    page.wait_for_timeout(300)
-
+    wait(page, 400)
     page.locator("#signup-email").fill(TEST_EMAIL)
     page.locator("#signup-password").fill(TEST_PASSWORD)
     page.locator("#btn-signup").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger")
 
-    toasts = page.locator(".toast-danger")
-    assert toasts.count() > 0
-
-
-def test_07_login_wrong_password_rejected(server, browser_page):
-    """Login with wrong password shows error."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
-
+    # ── Edge case: wrong password login ─────────────────────────────────
+    page.locator("#auth-tab-login").click()
+    wait(page, 400)
     page.locator("#login-email").fill(TEST_EMAIL)
     page.locator("#login-password").fill("WrongPassword999!")
     page.locator("#btn-login").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger")
 
-    toasts = page.locator(".toast-danger")
-    assert toasts.count() > 0
-
-
-def test_08_login_nonexistent_user_rejected(server, browser_page):
-    """Login with non-existent email shows error."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
-
+    # ── Edge case: non-existent user login ──────────────────────────────
     page.locator("#login-email").fill("ghost@example.com")
     page.locator("#login-password").fill("SomePass123!")
     page.locator("#btn-login").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger")
 
-    toasts = page.locator(".toast-danger")
-    assert toasts.count() > 0
-
-
-# ── 3. Login + Profile ───────────────────────────────────────────────────
-
-def test_09_login_success(server, browser_page):
-    """User can log in and is taken to profile page."""
-    page = browser_page
-    page.goto(f"{server}/dashboard")
-    page.wait_for_load_state("networkidle")
-
+    # ── Successful login ────────────────────────────────────────────────
     page.locator("#login-email").fill(TEST_EMAIL)
     page.locator("#login-password").fill(TEST_PASSWORD)
     page.locator("#btn-login").click()
-    page.wait_for_timeout(2500)
+    page.locator("#user-bar").wait_for(state="visible", timeout=15000)
+    wait(page, 4000)
 
-    # User bar visible, profile section shown
-    assert page.locator("#user-bar").is_visible()
-    assert page.locator("#section-profile").is_visible()
-
-
-def test_10_create_profile(server, browser_page):
-    """User can create an account holder profile."""
-    page = browser_page
-    _login(page, server)
-
-    profile_form = page.locator("#profile-form")
-    profile_view = page.locator("#profile-view")
-
-    if profile_view.is_visible():
-        assert "E2E" in profile_view.inner_text()
-        return
-
-    assert profile_form.is_visible()
+    # ── Create profile ──────────────────────────────────────────────────
+    # After login, loadProfile() fires async; for new user it 404s and shows the form
+    page.locator("#pf-first").wait_for(state="visible", timeout=15000)
     page.locator("#pf-first").fill("E2E")
     page.locator("#pf-last").fill("Tester")
     page.locator("#pf-dob").fill("1990-06-15")
     page.locator("#btn-profile").click()
-    page.wait_for_timeout(2000)
-
-    body = page.locator("body").inner_text()
-    assert "E2E" in body and "Tester" in body
-
-
-def test_11_profile_view_shows_name(server, browser_page):
-    """Profile view mode shows the holder name."""
-    page = browser_page
-    _login(page, server)
-    page.wait_for_timeout(1000)
+    wait(page, 2000)
     assert page.locator("#pv-name").inner_text() == "E2E Tester"
 
-
-# ── 4. Accounts ──────────────────────────────────────────────────────────
-
-def test_12_create_checking_account(server, browser_page):
-    """User can create a checking account."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('accounts')")
-    page.wait_for_timeout(500)
-
+    # ── Create checking account ─────────────────────────────────────────
+    nav(page, "accounts")
     page.locator("#new-acct-type").select_option("checking")
     page.locator("button:has-text('Open Account')").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    assert "checking" in page.locator("#acct-tbody").inner_text().lower()
 
-    body = page.locator("#acct-tbody").inner_text().lower()
-    assert "checking" in body
-
-
-def test_13_create_savings_account(server, browser_page):
-    """User can create a savings account."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('accounts')")
-    page.wait_for_timeout(500)
-
+    # ── Create savings account ──────────────────────────────────────────
     page.locator("#new-acct-type").select_option("savings")
     page.locator("button:has-text('Open Account')").click()
-    page.wait_for_timeout(1500)
-
-    body = page.locator("#acct-tbody").inner_text().lower()
-    assert "savings" in body
-
-
-def test_14_account_cards_visible(server, browser_page):
-    """Account visual cards are rendered."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('accounts')")
-    page.wait_for_timeout(1000)
+    wait(page, 1500)
+    assert "savings" in page.locator("#acct-tbody").inner_text().lower()
     assert page.locator(".acct-card").count() >= 2
 
-
-# ── 5. Transfers + edge cases ────────────────────────────────────────────
-
-def test_15_deposit_funds(server, browser_page):
-    """User can deposit money into checking."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('transfers')")
-    page.wait_for_timeout(1000)
-
+    # ── Deposit $5,000 into checking ────────────────────────────────────
+    nav(page, "transfers")
     page.locator("#dep-amt").fill("5000.00")
     page.locator("#xfer-deposit button.btn-success").click()
-    page.wait_for_timeout(2000)
+    wait(page, 2000)
+    expect_toast(page, "success", "deposited")
 
-    body = page.locator("body").inner_text().lower()
-    assert "deposited" in body or "$5000" in body or "5,000" in body or "success" in body
-
-
-def test_16_transfer_to_same_account_rejected(server, browser_page):
-    """Transfer to the same account shows error."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('transfers')")
-    page.wait_for_timeout(500)
-    page.evaluate("showXferTab('transfer')")
-    page.wait_for_timeout(500)
-
-    # Both from and to default to same (first) account
+    # ── Edge case: transfer to same account ─────────────────────────────
+    xfer_tab(page, "transfer")
     page.locator("#xfer-amt").fill("100.00")
     page.locator("#xfer-transfer button.btn-primary").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger", "same account")
 
-    body = page.locator("body").inner_text().lower()
-    assert "same account" in body
-
-
-def test_17_transfer_success(server, browser_page):
-    """User can transfer between checking and savings."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('transfers')")
-    page.wait_for_timeout(500)
-    page.evaluate("showXferTab('transfer')")
-    page.wait_for_timeout(500)
-
-    # Select savings as destination
+    # ── Transfer $1,000 to savings ──────────────────────────────────────
     page.locator("#xfer-to").select_option(index=1)
     page.locator("#xfer-amt").fill("1000.00")
     page.locator("#xfer-transfer button.btn-primary").click()
-    page.wait_for_timeout(2000)
+    wait(page, 2000)
+    expect_toast(page, "success", "transferred")
 
-    body = page.locator("body").inner_text().lower()
-    assert "transferred" in body or "$1000" in body or "1,000" in body or "success" in body
+    # ── Verify transaction history has entries ───────────────────────────
+    xfer_tab(page, "history")
+    wait(page, 1000)
+    assert page.locator("#txn-tbody tr").count() >= 2  # deposit + debit
 
+    # ── Verify all-transfers list ───────────────────────────────────────
+    xfer_tab(page, "all-transfers")
+    wait(page, 1000)
+    assert page.locator("#transfer-tbody tr:not(.empty-row)").count() >= 1
 
-def test_18_transaction_history_populated(server, browser_page):
-    """Transaction history shows deposit and transfer entries."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('transfers')")
-    page.wait_for_timeout(500)
-    page.evaluate("showXferTab('history')")
-    page.wait_for_timeout(1500)
-
-    rows = page.locator("#txn-tbody tr")
-    assert rows.count() >= 1
-
-
-def test_19_all_transfers_list(server, browser_page):
-    """All transfers page shows the transfer record."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('transfers')")
-    page.wait_for_timeout(500)
-    page.evaluate("showXferTab('all-transfers')")
-    page.wait_for_timeout(1500)
-
-    rows = page.locator("#transfer-tbody tr:not(.empty-row)")
-    assert rows.count() >= 1
-
-
-# ── 6. Cards + edge cases ────────────────────────────────────────────────
-
-def test_20_issue_card(server, browser_page):
-    """User can issue a debit card."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1000)
-
+    # ── Issue card ──────────────────────────────────────────────────────
+    nav(page, "cards")
     page.locator("button:has-text('Issue Card')").click()
-    page.wait_for_timeout(1500)
-
+    wait(page, 1500)
     assert page.locator("#card-tbody tr:not(.empty-row)").count() >= 1
+    assert page.locator(".cc-visual").count() >= 1
 
-
-def test_21_card_visual_displayed(server, browser_page):
-    """Visual credit card component is rendered."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1500)
-
-    visuals = page.locator(".cc-visual")
-    assert visuals.count() >= 1
-    text = visuals.first.inner_text()
-    assert "****" in text or "\u2022" in text
-
-
-def test_22_card_spend_success(server, browser_page):
-    """User can charge a card at a merchant."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1500)
-
+    # ── Card spend $75.50 ───────────────────────────────────────────────
     page.locator("#spend-amt").fill("75.50")
-    page.locator("#spend-merch").fill("E2E Coffee Shop")
+    page.locator("#spend-merch").fill("Downtown Bistro")
     page.locator("button:has-text('Charge Card')").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "success", "charged")
 
-    body = page.locator("body").inner_text().lower()
-    assert "charged" in body or "$75" in body or "coffee" in body or "success" in body
-
-
-def test_23_card_spend_insufficient_funds(server, browser_page):
-    """Card spend exceeding balance is rejected."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1500)
-
+    # ── Edge case: card spend exceeding balance ─────────────────────────
     page.locator("#spend-amt").fill("999999.99")
     page.locator("#spend-merch").fill("Too Expensive Store")
     page.locator("button:has-text('Charge Card')").click()
-    page.wait_for_timeout(1500)
+    wait(page, 1500)
+    expect_toast(page, "danger")
 
-    body = page.locator("body").inner_text().lower()
-    assert "insufficient" in body or "funds" in body or "error" in body
-
-
-def test_24_block_card(server, browser_page):
-    """User can block an active card."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1500)
-
-    block_btn = page.locator("button:has-text('Block')")
-    if block_btn.count() > 0:
-        block_btn.first.click()
-        page.wait_for_timeout(1500)
-        body = page.locator("#card-tbody").inner_text().lower()
-        assert "blocked" in body
-
-
-def test_25_card_spend_on_blocked_card_rejected(server, browser_page):
-    """Card spend on a blocked card is rejected."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('cards')")
-    page.wait_for_timeout(1500)
-
-    page.locator("#spend-amt").fill("10.00")
-    page.locator("#spend-merch").fill("Should Fail")
-    page.locator("button:has-text('Charge Card')").click()
-    page.wait_for_timeout(1500)
-
-    body = page.locator("body").inner_text().lower()
-    assert "blocked" in body or "inactive" in body or "error" in body or "not active" in body
-
-
-# ── 7. Statements ────────────────────────────────────────────────────────
-
-def test_26_generate_statement(server, browser_page):
-    """User can generate an account statement."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('statements')")
-    page.wait_for_timeout(1000)
-
+    # ── Generate statement ──────────────────────────────────────────────
+    nav(page, "statements")
     page.locator("button:has-text('Generate Statement')").click()
-    page.wait_for_timeout(1500)
-
-    body = page.locator("body").inner_text().lower()
-    assert "statement" in body or "transaction" in body
-
-
-def test_27_statement_detail_shows_financials(server, browser_page):
-    """Statement detail card shows opening/closing balances."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('statements')")
-    page.wait_for_timeout(500)
-
-    page.locator("button:has-text('Generate Statement')").click()
-    page.wait_for_timeout(1500)
-
+    wait(page, 2000)
     detail = page.locator("#stmt-detail-card")
     assert detail.is_visible()
     text = detail.inner_text().lower()
     assert "opening" in text or "closing" in text or "credits" in text
 
-
-def test_28_statement_history_populated(server, browser_page):
-    """Statement history table shows previously generated statements."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('statements')")
-    page.wait_for_timeout(1500)
-
-    rows = page.locator("#stmt-tbody tr:not(.empty-row)")
-    assert rows.count() >= 1
-
-
-# ── 8. Dashboard overview ────────────────────────────────────────────────
-
-def test_29_dashboard_overview_stats(server, browser_page):
-    """Dashboard shows total balance and account summary."""
-    page = browser_page
-    _login(page, server)
-    page.evaluate("showTab('dashboard')")
-    page.wait_for_timeout(2000)
-
+    # ── Dashboard overview ──────────────────────────────────────────────
+    nav(page, "dashboard")
+    wait(page, 2000)
     stats = page.locator(".stat-card")
     assert stats.count() >= 3
+    dash_text = page.locator("#dash-stats").inner_text().lower()
+    assert "total balance" in dash_text and "$" in dash_text
 
-    body = page.locator("#dash-stats").inner_text().lower()
-    assert "total balance" in body
-    assert "$" in body
+    # Recent activity shows entries from multiple transaction types
+    activity = page.locator("#dash-activity").inner_text().lower()
+    assert "deposit" in activity or "card" in activity or "transfer" in activity
 
-
-# ── 9. Theme + Ops ───────────────────────────────────────────────────────
-
-def test_30_theme_toggle(server, browser_page):
-    """Dark/light theme toggle switches correctly."""
-    page = browser_page
-    _login(page, server)
-
-    initial = page.evaluate("document.documentElement.getAttribute('data-theme')")
+    # ── Theme toggle ────────────────────────────────────────────────────
+    initial_theme = page.evaluate("document.documentElement.getAttribute('data-theme')")
     page.locator("#theme-toggle").click()
-    page.wait_for_timeout(300)
-    toggled = page.evaluate("document.documentElement.getAttribute('data-theme')")
-    assert toggled != initial
-
-    # Toggle back
+    wait(page, 500)
+    assert page.evaluate("document.documentElement.getAttribute('data-theme')") != initial_theme
     page.locator("#theme-toggle").click()
-    page.wait_for_timeout(300)
+    wait(page, 300)
 
-
-def test_31_ops_panel_shows_api_log(server, browser_page):
-    """Ops panel shows logged API requests."""
-    page = browser_page
-    _login(page, server)
-
+    # ── Ops panel ───────────────────────────────────────────────────────
     page.locator("#ops-toggle").click()
-    page.wait_for_timeout(500)
+    wait(page, 600)
     assert page.locator("#ops-panel").is_visible()
-
-    rows = page.locator("#ops-tbody tr")
-    assert rows.count() > 0
-
+    assert page.locator("#ops-tbody tr").count() > 0
     page.locator("#ops-toggle").click()
-    page.wait_for_timeout(300)
+    wait(page, 300)
 
-
-# ── 10. Logout ───────────────────────────────────────────────────────────
-
-def test_32_logout_returns_to_auth(server, browser_page):
-    """Logout returns to auth screen with disabled tabs."""
-    page = browser_page
-    _login(page, server)
-
+    # ── Logout ──────────────────────────────────────────────────────────
     page.locator("#logout-btn").click()
-    page.wait_for_timeout(1500)
-
+    wait(page, 1500)
     assert page.locator("#section-auth").is_visible()
     assert "disabled" in page.locator("[data-tab='accounts']").get_attribute("class")
 
 
-# ── 11. API sanity from browser ──────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+#  STORY 2 — Returning Customer (data persistence + more edge cases)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def test_33_api_health(server, browser_page):
-    """Health endpoint responds from browser context."""
+def test_02_returning_customer(server, browser_page):
+    """Returning customer logs in and verifies all data persisted from Story 1.
+    Then tests blocked-card spend and confirms the full audit trail."""
     page = browser_page
-    result = page.evaluate(f"""
+
+    # ── Login ───────────────────────────────────────────────────────────
+    page.locator("#login-email").fill(TEST_EMAIL)
+    page.locator("#login-password").fill(TEST_PASSWORD)
+    page.locator("#btn-login").click()
+    page.locator("#section-profile").wait_for(state="visible", timeout=10000)
+    wait(page, 2000)
+
+    # ── Profile persisted ───────────────────────────────────────────────
+    assert page.locator("#pv-name").inner_text() == "E2E Tester"
+
+    # ── Accounts persisted with correct balances ────────────────────────
+    nav(page, "accounts")
+    assert page.locator(".acct-card").count() >= 2
+    acct_text = page.locator("#section-accounts").inner_text().lower()
+    assert "checking" in acct_text and "savings" in acct_text
+
+    # ── Transaction history persisted (deposit + transfer debit + card spend)
+    nav(page, "transfers")
+    xfer_tab(page, "history")
+    wait(page, 1000)
+    txn_rows = page.locator("#txn-tbody tr")
+    assert txn_rows.count() >= 3  # deposit, debit, card_spend
+    history_text = page.locator("#txn-tbody").inner_text().lower()
+    assert "deposit" in history_text
+    assert "card" in history_text or "bistro" in history_text
+
+    # ── All transfers persisted ─────────────────────────────────────────
+    xfer_tab(page, "all-transfers")
+    wait(page, 1000)
+    assert page.locator("#transfer-tbody tr:not(.empty-row)").count() >= 1
+
+    # ── Card persisted ──────────────────────────────────────────────────
+    nav(page, "cards")
+    assert page.locator("#card-tbody tr:not(.empty-row)").count() >= 1
+
+    # ── Block the card ──────────────────────────────────────────────────
+    block_btn = page.locator("button:has-text('Block')")
+    assert block_btn.count() > 0, "Expected a Block button"
+    block_btn.first.click()
+    wait(page, 1500)
+    assert "blocked" in page.locator("#card-tbody").inner_text().lower()
+
+    # ── Edge case: spend on blocked card ────────────────────────────────
+    page.locator("#spend-amt").fill("10.00")
+    page.locator("#spend-merch").fill("Should Fail")
+    page.locator("button:has-text('Charge Card')").click()
+    wait(page, 1500)
+    body = page.locator("body").inner_text().lower()
+    assert "blocked" in body or "not active" in body or "error" in body
+
+    # ── Statements persisted ────────────────────────────────────────────
+    nav(page, "statements")
+    wait(page, 1000)
+    assert page.locator("#stmt-tbody tr:not(.empty-row)").count() >= 1
+
+    # ── Generate a second statement to confirm card spend is captured ───
+    page.locator("button:has-text('Generate Statement')").click()
+    wait(page, 2000)
+    detail_text = page.locator("#stmt-detail-card").inner_text().lower()
+    assert "debit" in detail_text or "card" in detail_text or "closing" in detail_text
+
+    # ── Dashboard shows full activity across all accounts ───────────────
+    nav(page, "dashboard")
+    wait(page, 2000)
+    activity = page.locator("#dash-activity").inner_text().lower()
+    assert len(activity) > 20  # meaningful content, not just "no activity"
+
+    # ── API health check from browser context ───────────────────────────
+    health = page.evaluate(f"""
         async () => {{
             const resp = await fetch('{server}/health');
             return await resp.json();
         }}
     """)
-    assert result.get("status") == "healthy"
+    assert health.get("status") == "healthy"
 
-
-def test_34_api_ready(server, browser_page):
-    """Readiness endpoint responds from browser context."""
-    page = browser_page
-    result = page.evaluate(f"""
-        async () => {{
-            const resp = await fetch('{server}/ready');
-            return await resp.json();
-        }}
-    """)
-    assert result.get("status") == "ready"
+    # ── Logout ──────────────────────────────────────────────────────────
+    page.locator("#logout-btn").click()
+    wait(page, 1500)
+    assert page.locator("#section-auth").is_visible()

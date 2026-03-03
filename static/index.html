@@ -854,6 +854,7 @@ async function doLogout() {
   $('ops-toggle').style.display = 'none';
   document.querySelectorAll('.nav-item').forEach(n => { if (n.dataset.tab !== 'auth') n.classList.add('disabled'); });
   showTab('auth');
+  showAuthMode('login');
   updateSteps('auth');
   toast('Logged out', 'info');
 }
@@ -947,14 +948,19 @@ async function loadDashboard() {
     </div>`).join('') :
     '<div class="empty-state"><p>No accounts yet.</p><button class="btn btn-outline btn-sm" onclick="showTab(\'accounts\')">Open an Account</button></div>';
 
-  // Recent activity - load transactions from first account
+  // Recent activity - load transactions from ALL accounts
   if (accounts.length) {
     try {
-      const { data } = await api('GET', `/accounts/${accounts[0].id}/transactions`);
-      const recent = data.slice(-5).reverse();
+      const allTxns = [];
+      for (const acct of accounts) {
+        const { data } = await api('GET', `/accounts/${acct.id}/transactions`);
+        data.forEach(t => { t._acct_type = acct.account_type; allTxns.push(t); });
+      }
+      allTxns.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const recent = allTxns.slice(0, 8);
       $('dash-activity').innerHTML = recent.length ?
         recent.map(t => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-light)">
-          <div>${badge(t.type)} <span style="font-size:0.78rem;margin-left:4px">${t.description || '-'}</span></div>
+          <div>${badge(t.type)} <span style="font-size:0.78rem;margin-left:4px">${t.description || '-'}</span> <span style="font-size:0.68rem;color:var(--muted);margin-left:4px">${t._acct_type}</span></div>
           <span class="money ${['credit','deposit'].includes(t.type) ? 'money-pos' : 'money-neg'}">${['credit','deposit'].includes(t.type) ? '+' : '-'}${fmt(t.amount_cents)}</span>
         </div>`).join('') :
         '<div style="color:var(--muted);font-size:0.82rem;padding:1rem 0">No recent activity</div>';
@@ -1067,6 +1073,8 @@ async function doDeposit() {
     toast(`Deposited ${fmt(cents)}!`, 'success');
     $('dep-amt').value = '';
     loadAccounts().then(popSelects);
+    loadTxns();
+    loadAllTransfers();
   } catch(e) { toast(e.message, 'danger'); }
   finally { hideLoading(); }
 }
@@ -1086,6 +1094,8 @@ async function doTransfer() {
     toast(`Transferred ${fmt(cents)}!`, 'success');
     $('xfer-amt').value = '';
     loadAccounts().then(popSelects);
+    loadTxns();
+    loadAllTransfers();
     updateSteps('cards');
   } catch(e) { toast(e.message, 'danger'); }
   finally { hideLoading(); }
@@ -1213,6 +1223,9 @@ async function doSpend() {
     $('spend-amt').value = '';
     $('spend-merch').value = '';
     loadAccounts().then(popSelects);
+    loadCards();
+    loadTxns();
+    loadAllTransfers();
     updateSteps('statements');
   } catch(e) { toast(e.message, 'danger'); }
   finally { hideLoading(); }
