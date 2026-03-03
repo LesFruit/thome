@@ -31,6 +31,7 @@
 | D-025 | Test Logs | `docs/logs/` | API, E2E, backend story, lint logs |
 | D-026 | E2E Video | `docs/videos/playwright-e2e-tests.mp4` | 1920x1080 E2E test recording |
 | D-027 | Demo Video | `docs/videos/banking-demo-walkthrough.mp4` | 1920x1080 demo walkthrough |
+| D-028 | Browser Audit | `docs/logs/browser-audit.md` | 71-test BrowserOS manual audit (1 bug, 2 findings) |
 
 ## Relationship Edges
 
@@ -52,6 +53,7 @@
 | D-025 | D-003 | evidence_for |
 | D-026 | D-022 | evidence_for |
 | D-027 | D-024 | evidence_for |
+| D-028 | D-001 §4.10 | verified_by |
 
 ## Retrieval Tags
 

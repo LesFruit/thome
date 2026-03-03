@@ -129,6 +129,11 @@ def get_transfer(db: Session, user: User, transfer_id: str) -> Transfer:
 def deposit(db: Session, user: User, account_id: str, amount_cents: int) -> Account:
     """Internal deposit for seeding/testing. Creates a credit transaction."""
     account = _enforce_account_ownership(db, user, account_id)
+    if account.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Account is {account.status}",
+        )
     if amount_cents <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

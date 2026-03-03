@@ -96,6 +96,15 @@ Covers: 4.10 (bugs fixed), 4.13 (story-driven E2E).
 | Logout left signup form visible | Reset auth mode on logout |
 | Playwright used wrong DB via forked singleton | `subprocess.Popen` with explicit env vars |
 | E2E videos were repetitive | 2 story-driven flows instead of 34 isolated tests |
+| Deposit accepted on frozen/closed accounts | Added account status check to `deposit()` |
+
+### Session 15: BrowserOS Manual Audit + Bug Fix
+71-test manual audit via BrowserOS (Chrome MCP) covering auth edge cases (8), user journey (18), deposit edge cases (4), transfer edge cases (7), card edge cases (12), account state transitions (8), cross-user isolation (6), and UI/UX (8).
+
+**Bug found:** `deposit()` in `transfer_service.py` accepted deposits to frozen/closed accounts — missing account status check. Fixed by adding `if account.status != "active"` guard.
+**Cross-user isolation:** 6/6 tests returned HTTP 403 — airtight.
+**72 tests (70 API + 2 E2E), 94% coverage.**
+Covers: 4.3 (bug fix), 4.10 (UI verification).
 
 ## Evidence
 
@@ -109,6 +118,7 @@ Covers: 4.10 (bugs fixed), 4.13 (story-driven E2E).
 | SLO targets met | 5/5 |
 | Security checklist | 10/10 |
 | Release gates | 10/10 |
+| Browser audit | 71 tests (69 pass, 1 bug fixed, 2 findings) |
 | Traceability rows | 12/12 |
 
 ## Logs
@@ -118,3 +128,4 @@ Test execution logs are saved in `docs/logs/`:
 - `e2e-tests.log` — 2 Playwright E2E story tests
 - `backend-e2e-story.log` — 13-step backend flow (signup→logout)
 - `lint-report.log` — Ruff lint (all checks passed)
+- `browser-audit.md` — 71-test BrowserOS manual audit (1 bug fixed, 2 design findings)
