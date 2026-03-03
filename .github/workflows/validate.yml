@@ -31,11 +31,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build
-      - name: Smoke test container
+      - name: Run tests in Docker
         run: |
-          docker compose up -d
+          docker build --target test -t banking-test .
+          docker run --rm banking-test
+      - name: Build production image and smoke test
+        run: |
+          docker build --target runtime -t banking-service .
+          docker run -d --name smoke-test -p 8000:8000 -e JWT_SECRET_KEY=ci-test-key banking-service
           sleep 5
           curl -sf http://localhost:8000/health | grep -q healthy
           curl -sf http://localhost:8000/ready  | grep -q ready
-          docker compose down
+          docker rm -f smoke-test

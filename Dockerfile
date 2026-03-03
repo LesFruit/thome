@@ -9,7 +9,25 @@ RUN pip install --no-cache-dir uv && \
     uv pip compile pyproject.toml -o requirements.txt && \
     uv pip install --system --no-cache -r requirements.txt
 
-# Stage 2: Runtime — lean image with app code + deps
+# Stage 2: Test — full suite inside Docker
+FROM python:3.12-slim AS test
+
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
+
+# Install test deps
+RUN pip install --no-cache-dir pytest pytest-cov httpx email-validator
+
+COPY app/ ./app/
+COPY tests/ ./tests/
+COPY static/ ./static/
+COPY pyproject.toml .
+
+ENV JWT_SECRET_KEY=test-secret-key
+CMD ["pytest", "tests/", "-v", "--cov=app", "--cov-report=term-missing", "--cov-fail-under=80"]
+
+# Stage 3: Runtime — lean image with app code + deps
 FROM python:3.12-slim AS runtime
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
