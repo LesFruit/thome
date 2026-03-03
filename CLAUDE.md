@@ -13,13 +13,13 @@ A production-ready banking service API built with FastAPI and SQLite. Implements
 uv run uvicorn app.main:app --reload
 
 # Run all API tests with coverage
-uv run --with pytest,httpx,pytest-cov pytest tests/ -v --ignore=tests/test_playwright.py --cov=app --cov-report=term-missing
+uv run --with pytest,httpx,email-validator,pytest-cov pytest tests/ -v --cov=app --cov-report=term-missing
 
 # Run a single test file
-uv run --with pytest,httpx pytest tests/test_health.py -v
+uv run --with pytest,httpx,email-validator pytest tests/test_health.py -v
 
 # Run a single test
-uv run --with pytest,httpx pytest tests/test_health.py::test_health_returns_healthy -v
+uv run --with pytest,httpx,email-validator pytest tests/test_health.py::test_health_returns_healthy -v
 
 # Lint and format
 uv run --with ruff ruff check app/ tests/
