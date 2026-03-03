@@ -21,11 +21,11 @@
 | D-015 | Test Statements | `tests/test_statements.py` | Statement tests (5) | Test | 2026-03-03 |
 | D-016 | Test Logging | `tests/test_logging_and_health.py` | Logging/sanitization tests (5) | Test | 2026-03-03 |
 | D-017 | Demo Client | `scripts/test_client.py` | E2E 13-step demo flow | Test | 2026-03-03 |
-| D-018 | Dashboard | `static/index.html` | Frontend UI | Frontend | 2026-03-03 |
+| D-018 | Dashboard | `static/index.html` | 7-tab SPA (1294 lines, dark/light theme, ops panel) | Frontend | 2026-03-03 |
 | D-019 | Test Stress | `tests/test_stress.py` | Concurrency/stress tests (6) | Test | 2026-03-03 |
 | D-020 | CI Pipeline | `.github/workflows/validate.yml` | Lint, test, docker smoke | Platform | 2026-03-03 |
 | D-021 | SLO Benchmark | `scripts/benchmark.py` | Latency measurement script | Platform | 2026-03-03 |
-| D-022 | Playwright E2E | `tests/test_playwright.py` | Browser E2E tests (5) | Test | 2026-03-03 |
+| D-022 | Playwright E2E | `tests/test_playwright.py` | Browser E2E tests (30) + video recording | Test | 2026-03-03 |
 | D-023 | Seed Data | `scripts/seed_data.py` | Demo environment seeder | Test | 2026-03-03 |
 
 ## Relationship Edges

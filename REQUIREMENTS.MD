@@ -569,10 +569,10 @@ For each edge case, attach:
 - output/screenshot evidence
 
 ### 10.5 Screenshot Inventory
-- [ ] accounts/transfers/cards/statements/profile views
-- [ ] guided flow progression
-- [ ] reviewer/ops evidence view (request_id, status, latency)
-- [ ] representative failure state in UI
+- [x] accounts/transfers/cards/statements/profile views (BrowserOS demo session 13)
+- [x] guided flow progression (BrowserOS demo: signup→login→profile→accounts→transfers→cards→statements→dashboard)
+- [x] reviewer/ops evidence view (request_id, status, latency) (BrowserOS demo: Ops panel with 37 requests)
+- [x] representative failure state in UI (Playwright tests: duplicate signup error, invalid login error)
 
 Acceptance criteria:
 - Reviewer can reproduce outcomes from commands only.
@@ -620,10 +620,10 @@ This is the canonical release gate list. Do not maintain a separate mirror docum
 - [x] formatting applied/clean — `ruff format --check` clean
 - [x] API suite passes (unit/integration/e2e) — 70 tests, 94% coverage
 - [x] stress/concurrency suite passes — 6 stress tests (overdraft, idempotency, ledger)
-- [x] Playwright suite passes — 5 E2E tests (dashboard load, signup, login, health, ready) (commit `99141fd`)
+- [x] Playwright suite passes — 30 E2E tests with video recording (dashboard, auth, profile, accounts, transfers, cards, statements, theme, ops)
 - [x] docker build + compose smoke checks pass — Dockerfile + docker-compose.yml present, CI validates
 - [x] security validation checklist executed — section 9 fully checked
-- [x] RAG index and docs refreshed — `docs/INDEX.md` with 23 document nodes
+- [x] RAG index and docs refreshed — `docs/INDEX.md` with 23 document nodes, updated for session 13
 - [x] demo evidence bundle updated — section 10 filled with test references
 - [x] SLO/SLI snapshot recorded — section 13 trend table filled
 
@@ -725,7 +725,7 @@ Use this table for requirement-level auditability.
 | 1.5 | Cards | 4.5 | `app/routers/cards.py`, `app/services/card_service.py` | 12 tests (`test_cards.py`) | state machine + spend + cross-user | Agent | DONE |
 | 1.6 | Statements | 4.6 | `app/routers/statements.py`, `app/services/statement_service.py` | 5 tests (`test_statements.py`) | period calc + ownership | Agent | DONE |
 | 2.x | SQLite DB | 4.1 | `app/database.py`, `app/models/*` | stress + integration | WAL + guarded UPDATE + busy_timeout | Agent | DONE |
-| 3.x | Test suite | 5 | `tests/*` (8 files, 70 tests) | 94% coverage | `pytest --cov` report | Agent | DONE |
+| 3.x | Test suite | 5 | `tests/*` (8 files, 70 API + 30 E2E) | 94% coverage | `pytest --cov` report | Agent | DONE |
 | 4.x | Containerization | 4.9 | `Dockerfile`, `docker-compose.yml` | CI docker job | multi-stage build + healthcheck | Agent | DONE |
 | 5.x | Logging/Monitoring | 4.7 | `app/logging_config.py`, `app/middleware/*` | 5 tests (`test_logging_and_health.py`) | JSON logs + no traceback leak | Agent | DONE |
 | 6.x | Health checks | 4.8 | `app/routers/health.py` | 2 tests (`test_health.py`) | `/health` + `/ready` probes | Agent | DONE |

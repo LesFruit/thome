@@ -153,6 +153,34 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 
 **Tests:** 75 total (70 API + 5 E2E), 94% coverage. **Covers:** 4.10 (enhanced), 4.13 (E2E), 12.1 Playwright gate now passing.
 
+### Session 13: Comprehensive Frontend + Docker Fixes + Playwright Expansion (2026-03-03)
+
+**Commits:** `d60e9c6` (frontend rewrite + Docker fixes), current (Playwright 30-test suite)
+
+- **Frontend rewrite** (485 → 1294 lines): 7-tab SPA (Auth, Profile, Dashboard overview, Accounts, Transfers, Cards, Statements)
+  - Visual credit card CSS component (****7971, cardholder name, expiry)
+  - Toast notification system with auto-dismiss
+  - Dark/light theme toggle with localStorage persistence
+  - Confirmation modals for destructive actions (close account, block card)
+  - Responsive sidebar with mobile collapse
+  - Loading overlay during API calls
+  - Ops/Reviewer panel with live API request log (37 requests captured in demo)
+  - All 27 API endpoints covered from frontend
+  - Token stored in memory only, auto-refresh on 401, UUID idempotency keys
+- **Dockerfile fixes** (3 bugs):
+  1. Process substitution `<(...)` fails in sh → switched to `uv pip compile -o requirements.txt`
+  2. Missing email-validator runtime dependency → added to pyproject.toml
+  3. SQLite can't create DB file → added `RUN mkdir -p /app/data`
+- **Playwright expansion** (5 → 30 tests): full E2E suite with video recording
+  - Video recording enabled: `record_video_dir=recordings/`, 1280x720 resolution
+  - Tests: dashboard load, guided steps, sidebar state, signup, duplicate signup error, login, invalid login, profile CRUD, checking/savings account creation, account cards, deposit, transfer, transaction history, all transfers, issue card, card visual, card spend, block card, generate statement, statement detail, statement history, dashboard overview stats, theme toggle, ops panel, logout, health/ready from browser
+- **BrowserOS recorded demo**: live walkthrough of complete user journey
+  - Signup → Login → Profile → Accounts (checking + savings) → Deposit ($5,000) → Transfer ($1,000) → Card issue (****7971) → Card spend ($75.50 at Downtown Bistro) → Statement generation → Dashboard overview → Ops panel → Dark mode → Logout
+
+**Iteration:** Docker build failed 3 times with distinct issues (sh vs bash, missing dep, missing dir). BrowserOS date input required native setter via JS execution. Sidebar navigation required `showTab()` call due to disabled state.
+
+**Tests:** 75+ total (70 API + 5+ E2E expanded to 30), 94% coverage. **Covers:** 4.9 (Docker hardened), 4.10 (frontend comprehensive), 4.13 (E2E expanded), 10.5 (screenshot evidence via BrowserOS).
+
 ## Challenges and Manual Interventions
 
 | Challenge | Resolution | Manual Decision |
@@ -166,13 +194,13 @@ Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 75 (70 API + 5 E2E) |
+| Total tests | 100 (70 API + 30 E2E) |
 | Test files | 10 |
 | Coverage | 94% (80% minimum) |
 | TDD cycles (red→green) | 8 |
-| Commits | 16 |
+| Commits | 18 |
 | Lines of app code | ~1200 |
-| Lines of test code | ~1100 |
+| Lines of test code | ~1800 |
 | SLO targets met | 5/5 |
 | Security checklist items | 10/10 |
 | Release gates passed | 10/10 |
