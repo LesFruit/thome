@@ -22,6 +22,9 @@
 | D-016 | Test Logging | `tests/test_logging_and_health.py` | Logging/sanitization tests (5) | Test | 2026-03-03 |
 | D-017 | Demo Client | `scripts/test_client.py` | E2E 13-step demo flow | Test | 2026-03-03 |
 | D-018 | Dashboard | `static/index.html` | Frontend UI | Frontend | 2026-03-03 |
+| D-019 | Test Stress | `tests/test_stress.py` | Concurrency/stress tests (6) | Test | 2026-03-03 |
+| D-020 | CI Pipeline | `.github/workflows/validate.yml` | Lint, test, docker smoke | Platform | 2026-03-03 |
+| D-021 | SLO Benchmark | `scripts/benchmark.py` | Latency measurement script | Platform | 2026-03-03 |
 
 ## Relationship Edges
 
@@ -38,6 +41,9 @@
 | D-016 | D-001 §4.7 | verified_by |
 | D-017 | D-001 §10 | verified_by |
 | D-018 | D-001 §4.10 | verified_by |
+| D-019 | D-001 §5 | verified_by |
+| D-020 | D-001 §4.12 | verified_by |
+| D-021 | D-001 §13 | verified_by |
 
 ## Retrieval Tags
 
@@ -46,13 +52,15 @@
 | `feature` | D-001, D-002 |
 | `setup` | D-002, D-005, D-007, D-008 |
 | `ai_evidence` | D-003 |
-| `test_scope` | D-009–D-017 |
+| `test_scope` | D-009–D-019 |
 | `ops_area` | D-005, D-007, D-008, D-016 |
 | `layer:auth` | D-011 |
 | `layer:domain` | D-012, D-013, D-014, D-015 |
 | `layer:platform` | D-009, D-010 |
-| `risk:financial` | D-013, D-014 |
+| `risk:financial` | D-013, D-014, D-019 |
 | `risk:security` | D-011, D-016 |
+| `ci_pipeline` | D-020 |
+| `slo_evidence` | D-021 |
 
 ## Start Here
 

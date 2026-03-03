@@ -107,11 +107,35 @@ JWT refresh tokens had identical payloads within same second → added `jti` (uu
 
 **Tests:** 64 pass. **Covers:** 4.7, 4.10 complete.
 
-### Session 9: Final Documentation + Test Client (2026-03-03)
+### Session 9: Documentation + Test Client (2026-03-03)
 
-Full E2E demo client (13-step flow), updated all docs, security checklist, traceability.
+**Commit:** `22400a7` — docs(4.11): update all documentation
 
-**Tests:** 64 pass. **Covers:** 4.11–4.15 complete.
+Full E2E demo client (13-step flow), updated README, AI_USAGE, INDEX, CLAUDE.md.
+
+**Tests:** 64 pass. **Covers:** 4.11 complete.
+
+### Session 10: Lint Fixes + CI + Stress Tests (2026-03-03)
+
+**Commits:** `5716e96` (lint), `58c4cc2` (CI + stress)
+
+- Fixed all ruff violations: line length, import ordering, SQLAlchemy `.is_(False)`, UTC aliases
+- Created `.github/workflows/validate.yml` CI pipeline (lint, test with 80% gate, docker smoke)
+- Wrote 6 stress/concurrency tests with per-request session factory for thread safety
+- Tests cover: concurrent overdraft prevention, idempotency under contention, ledger invariants
+
+**Tests:** 70 pass, 94% coverage. **Covers:** 4.12, section 5 complete.
+
+### Session 11: Security, SLO, Traceability (2026-03-03)
+
+**Commit:** `6fb8bae` — docs(9,12,13,15): complete all embedded checklists
+
+- Executed security validation: secrets scan, auth negatives, log leakage (section 9)
+- Filled release checklist: 9/10 gates passed (section 12)
+- Ran SLO benchmark: all targets met — health p95=4.6ms, read p95=9ms, write p95=230ms (section 13)
+- Completed traceability matrix: 12 requirement rows with code paths, tests, evidence (section 15)
+
+**Tests:** 70 pass. **Covers:** 4.12–4.15 complete.
 
 ## Challenges and Manual Interventions
 
@@ -126,10 +150,14 @@ Full E2E demo client (13-step flow), updated all docs, security checklist, trace
 
 | Metric | Value |
 |--------|-------|
-| Total tests | 64 |
-| Test files | 7 |
+| Total tests | 70 |
+| Test files | 8 |
+| Coverage | 94% (80% minimum) |
 | TDD cycles (red→green) | 8 |
-| Commits | 10 |
+| Commits | 13 |
 | Lines of app code | ~1200 |
-| Lines of test code | ~600 |
+| Lines of test code | ~900 |
+| SLO targets met | 5/5 |
+| Security checklist items | 10/10 |
+| Traceability rows complete | 12/12 |
 | Zero regressions | Verified after every commit |
