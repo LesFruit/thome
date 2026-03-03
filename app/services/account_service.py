@@ -91,6 +91,11 @@ def update_account_status(db: Session, user: User, account_id: str, new_status: 
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot transition from '{account.status}' to '{new_status}'",
         )
+    if new_status == "closed" and account.balance_cents != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Account balance must be zero before closing",
+        )
     account.status = new_status
     db.commit()
     db.refresh(account)

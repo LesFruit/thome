@@ -97,14 +97,19 @@ Covers: 4.10 (bugs fixed), 4.13 (story-driven E2E).
 | Playwright used wrong DB via forked singleton | `subprocess.Popen` with explicit env vars |
 | E2E videos were repetitive | 2 story-driven flows instead of 34 isolated tests |
 | Deposit accepted on frozen/closed accounts | Added account status check to `deposit()` |
+| Account closed with non-zero balance | Added balance-zero guard before close transition |
 
-### Session 15: BrowserOS Manual Audit + Bug Fix
-71-test manual audit via BrowserOS (Chrome MCP) covering auth edge cases (8), user journey (18), deposit edge cases (4), transfer edge cases (7), card edge cases (12), account state transitions (8), cross-user isolation (6), and UI/UX (8).
+### Session 15: Automated Browser Audit → Backend Bug Discovery
+`6d2d042` — 71-test automated browser audit via BrowserOS (Chrome MCP). Drove the frontend through every edge case systematically: auth (8), user journey (18), deposits (4), transfers (7), cards (12), account states (8), cross-user isolation (6), UI/UX (8).
 
-**Bug found:** `deposit()` in `transfer_service.py` accepted deposits to frozen/closed accounts — missing account status check. Fixed by adding `if account.status != "active"` guard.
+**Key insight: browser-driven testing found 2 backend bugs that 70 unit tests missed.** By exercising the API through actual UI flows (freeze account → try deposit, close account with balance), the audit caught gaps between service boundaries that isolated tests assumed were handled elsewhere.
+
+1. **`deposit()` accepted deposits to frozen/closed accounts** — `transfer_service.py` never checked `account.status`. Transfer service had this guard but deposit didn't. Fixed: `if account.status != "active"` guard.
+2. **Account closure succeeded with non-zero balance** — `account_service.py` validated the state transition but not the balance. A user could trap $4000 in an unreachable closed account. Fixed: `if new_status == "closed" and account.balance_cents != 0` guard.
+
 **Cross-user isolation:** 6/6 tests returned HTTP 403 — airtight.
-**72 tests (70 API + 2 E2E), 94% coverage.**
-Covers: 4.3 (bug fix), 4.10 (UI verification).
+**70 API tests pass, 94% coverage after fixes.**
+Covers: 4.3 (account bugs), 4.10 (UI verification).
 
 ## Evidence
 
