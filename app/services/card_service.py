@@ -7,7 +7,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.models.account import Account, AccountHolder
-from app.models.card import Card, CardTransaction, CARD_STATUS_TRANSITIONS
+from app.models.card import CARD_STATUS_TRANSITIONS, Card, CardTransaction
 from app.models.transaction import Transaction
 from app.models.user import User
 
@@ -69,7 +69,9 @@ def card_spend(
     """Returns (card_transaction, is_new)."""
 
     # Idempotency
-    existing = db.query(CardTransaction).filter(CardTransaction.idempotency_key == idempotency_key).first()
+    existing = db.query(CardTransaction).filter(
+        CardTransaction.idempotency_key == idempotency_key,
+    ).first()
     if existing:
         return existing, False
 
@@ -77,17 +79,29 @@ def card_spend(
 
     # Card state check
     if card.status != "active":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Card is {card.status}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Card is {card.status}",
+        )
     if card.expiry_date < date.today():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Card is expired")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Card is expired",
+        )
 
     # Account state check
     account = db.query(Account).filter(Account.id == card.account_id).first()
     if account.status != "active":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Account is {account.status}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Account is {account.status}",
+        )
 
     if amount_cents <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount must be positive")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be positive",
+        )
 
     # Atomic guarded debit
     result = db.execute(
@@ -97,7 +111,10 @@ def card_spend(
         .values(balance_cents=Account.balance_cents - amount_cents)
     )
     if result.rowcount == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient funds")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient funds",
+        )
 
     ct = CardTransaction(
         card_id=card_id,

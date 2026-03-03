@@ -3,10 +3,10 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.auth.dependencies import get_current_user
+from app.database import get_db
 from app.models.user import User
-from app.schemas.account import HolderCreateRequest, HolderUpdateRequest, HolderResponse
+from app.schemas.account import HolderCreateRequest, HolderResponse, HolderUpdateRequest
 from app.services import account_service
 
 router = APIRouter(prefix="/api/v1/holders", tags=["holders"])

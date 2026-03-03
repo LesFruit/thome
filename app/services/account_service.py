@@ -5,18 +5,27 @@ from datetime import date
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.account import AccountHolder, Account, ACCOUNT_STATUS_TRANSITIONS
+from app.models.account import ACCOUNT_STATUS_TRANSITIONS, Account, AccountHolder
 from app.models.user import User
-
 
 # --- Holders ---
 
-def create_holder(db: Session, user: User, first_name: str, last_name: str, dob: date) -> AccountHolder:
-    existing = db.query(AccountHolder).filter(AccountHolder.user_id == user.id).first()
+def create_holder(
+    db: Session, user: User, first_name: str, last_name: str, dob: date,
+) -> AccountHolder:
+    existing = db.query(AccountHolder).filter(
+        AccountHolder.user_id == user.id,
+    ).first()
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Holder already exists for this user")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Holder already exists for this user",
+        )
 
-    holder = AccountHolder(user_id=user.id, first_name=first_name, last_name=last_name, date_of_birth=dob)
+    holder = AccountHolder(
+        user_id=user.id, first_name=first_name,
+        last_name=last_name, date_of_birth=dob,
+    )
     db.add(holder)
     db.commit()
     db.refresh(holder)
@@ -45,7 +54,10 @@ def update_holder(db: Session, user: User, **fields) -> AccountHolder:
 def _get_holder_for_user(db: Session, user: User) -> AccountHolder:
     holder = db.query(AccountHolder).filter(AccountHolder.user_id == user.id).first()
     if not holder:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Create an account holder first")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Create an account holder first",
+        )
     return holder
 
 

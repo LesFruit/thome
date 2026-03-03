@@ -4,16 +4,25 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.auth.dependencies import get_current_user
+from app.database import get_db
 from app.models.user import User
-from app.schemas.card import CardResponse, CardUpdateRequest, CardSpendRequest, CardTransactionResponse
+from app.schemas.card import (
+    CardResponse,
+    CardSpendRequest,
+    CardTransactionResponse,
+    CardUpdateRequest,
+)
 from app.services import card_service
 
 router = APIRouter(prefix="/api/v1", tags=["cards"])
 
 
-@router.post("/accounts/{account_id}/cards", response_model=CardResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/accounts/{account_id}/cards",
+    response_model=CardResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def issue_card(
     account_id: str,
     db: Session = Depends(get_db),
@@ -46,14 +55,22 @@ def update_card(
     return card_service.update_card_status(db, user, card_id, req.status)
 
 
-@router.post("/cards/{card_id}/spend", response_model=CardTransactionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/cards/{card_id}/spend",
+    response_model=CardTransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def card_spend(
     card_id: str,
     req: CardSpendRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    ct, is_new = card_service.card_spend(db, user, card_id, req.amount_cents, req.merchant, req.idempotency_key)
+    ct, is_new = card_service.card_spend(
+        db, user, card_id, req.amount_cents,
+        req.merchant, req.idempotency_key,
+    )
     if not is_new:
-        return JSONResponse(status_code=200, content=CardTransactionResponse.model_validate(ct).model_dump(mode="json"))
+        data = CardTransactionResponse.model_validate(ct).model_dump(mode="json")
+        return JSONResponse(status_code=200, content=data)
     return ct

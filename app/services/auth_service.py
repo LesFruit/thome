@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import create_access_token, create_refresh_token, get_refresh_token_expiry
-from app.models.user import User, RefreshToken
+from app.models.user import RefreshToken, User
 
 
 def _hash_password(password: str) -> str:
@@ -61,15 +61,21 @@ def refresh(db: Session, raw_refresh_token: str) -> dict:
     token_hash = _hash_refresh_token(raw_refresh_token)
     stored = db.query(RefreshToken).filter(
         RefreshToken.token_hash == token_hash,
-        RefreshToken.revoked == False,
+        RefreshToken.revoked.is_(False),
     ).first()
 
     if not stored:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
 
     user = db.query(User).filter(User.id == stored.user_id).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
 
     # Revoke old token (rotation)
     stored.revoked = True

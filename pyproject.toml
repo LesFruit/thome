@@ -34,7 +34,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "SIM"]
-ignore = ["S105", "S106"]  # hardcoded password warnings (test fixtures)
+ignore = ["S105", "S106", "B008", "S104"]  # S10x: test fixtures, B008: Depends(), S104: 0.0.0.0
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "E501"]  # assert + long lines fine in tests
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

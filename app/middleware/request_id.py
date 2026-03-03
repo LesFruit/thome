@@ -1,7 +1,7 @@
 """Request ID middleware — assigns/echoes X-Request-ID on every request."""
 
-import uuid
 import time
+import uuid
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request

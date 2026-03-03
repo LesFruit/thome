@@ -5,7 +5,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.models.account import Account, AccountHolder
-from app.models.transaction import Transfer, Transaction
+from app.models.transaction import Transaction, Transfer
 from app.models.user import User
 
 
@@ -33,20 +33,35 @@ def create_transfer(
 
     # Validate
     if source_account_id == destination_account_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot transfer to same account")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot transfer to same account",
+        )
 
     if amount_cents <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount must be positive")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be positive",
+        )
 
     src = _enforce_account_ownership(db, user, source_account_id)
     dst_account = db.query(Account).filter(Account.id == destination_account_id).first()
     if not dst_account:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Destination account not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Destination account not found",
+        )
 
     if src.status != "active":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source account is not active")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source account is not active",
+        )
     if dst_account.status != "active":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Destination account is not active")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Destination account is not active",
+        )
 
     # Atomic guarded debit — prevents overdraft without check-then-act race
     result = db.execute(
@@ -56,7 +71,10 @@ def create_transfer(
         .values(balance_cents=Account.balance_cents - amount_cents)
     )
     if result.rowcount == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient funds")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient funds",
+        )
 
     # Credit destination
     db.execute(
@@ -112,7 +130,10 @@ def deposit(db: Session, user: User, account_id: str, amount_cents: int) -> Acco
     """Internal deposit for seeding/testing. Creates a credit transaction."""
     account = _enforce_account_ownership(db, user, account_id)
     if amount_cents <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount must be positive")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be positive",
+        )
     account.balance_cents += amount_cents
     db.add(Transaction(
         account_id=account_id,
@@ -127,4 +148,9 @@ def deposit(db: Session, user: User, account_id: str, amount_cents: int) -> Acco
 
 def list_transactions(db: Session, user: User, account_id: str) -> list[Transaction]:
     _enforce_account_ownership(db, user, account_id)
-    return db.query(Transaction).filter(Transaction.account_id == account_id).order_by(Transaction.created_at).all()
+    return (
+        db.query(Transaction)
+        .filter(Transaction.account_id == account_id)
+        .order_by(Transaction.created_at)
+        .all()
+    )

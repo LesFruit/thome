@@ -1,6 +1,6 @@
 """Statement business logic — generate, list, get with period calculations."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -26,8 +26,8 @@ def generate_statement(
 ) -> Statement:
     _enforce_account_ownership(db, user, account_id)
 
-    start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
-    end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59, tzinfo=timezone.utc)
+    start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=UTC)
+    end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59, tzinfo=UTC)
 
     # Transactions before the period (for opening balance)
     pre_txns = db.query(Transaction).filter(

@@ -1,7 +1,6 @@
 """Pydantic schemas for holders and accounts."""
 
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -13,9 +12,9 @@ class HolderCreateRequest(BaseModel):
 
 
 class HolderUpdateRequest(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    date_of_birth: Optional[date] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    date_of_birth: date | None = None
 
 
 class HolderResponse(BaseModel):

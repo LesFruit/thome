@@ -1,17 +1,17 @@
 """Card and CardTransaction ORM models."""
 
-import uuid
 import secrets
-from datetime import datetime, timezone, date
-from dateutil.relativedelta import relativedelta
+import uuid
+from datetime import UTC, date, datetime
 
-from sqlalchemy import Column, String, Integer, DateTime, Date, ForeignKey
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String
 
 from app.database import Base
 
 
 def _utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _new_id():

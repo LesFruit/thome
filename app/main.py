@@ -5,15 +5,15 @@ import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import init_db, dispose_db
+from app.database import dispose_db, init_db
 from app.logging_config import setup_logging
-from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.error_handler import register_error_handlers
-from app.routers import health, auth, holders, accounts, transfers, cards, statements
+from app.middleware.request_id import RequestIDMiddleware
+from app.routers import accounts, auth, cards, health, holders, statements, transfers
 
 logger = logging.getLogger(__name__)
 

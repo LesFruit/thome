@@ -4,14 +4,16 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.auth.dependencies import get_current_user
+from app.database import get_db
 from app.models.user import User
-from app.schemas.transaction import (
-    TransferCreateRequest, TransferResponse,
-    DepositRequest, TransactionResponse,
-)
 from app.schemas.account import AccountResponse
+from app.schemas.transaction import (
+    DepositRequest,
+    TransactionResponse,
+    TransferCreateRequest,
+    TransferResponse,
+)
 from app.services import transfer_service
 
 router = APIRouter(prefix="/api/v1", tags=["transfers"])
@@ -28,7 +30,8 @@ def create_transfer(
         req.amount_cents, req.idempotency_key,
     )
     if not is_new:
-        return JSONResponse(status_code=200, content=TransferResponse.model_validate(transfer).model_dump(mode="json"))
+        data = TransferResponse.model_validate(transfer).model_dump(mode="json")
+        return JSONResponse(status_code=200, content=data)
     return transfer
 
 

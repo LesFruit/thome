@@ -132,7 +132,7 @@ def test_idempotency_key_replay(client):
 
 def test_list_transfers(client):
     headers, src, dst = _setup_two_accounts(client)
-    for i in range(3):
+    for _i in range(3):
         client.post("/api/v1/transfers", json={
             "source_account_id": src,
             "destination_account_id": dst,
