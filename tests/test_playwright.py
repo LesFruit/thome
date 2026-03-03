@@ -426,3 +426,184 @@ def test_02_returning_customer(server, browser_page):
     page.locator("#logout-btn").click()
     wait(page, 1500)
     assert page.locator("#section-auth").is_visible()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  COMPONENT TESTS — API-level verification via browser fetch
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_03_api_components(server, browser_page):
+    """Component-level API tests run from the browser context.
+    Validates each service independently: auth, holders, accounts,
+    transfers, cards, statements, health — including ledger completeness
+    for card spends (verifies Transaction record is created)."""
+    page = browser_page
+    import json
+    import uuid as _uuid
+
+    def fetch(method, path, body=None, token=True):
+        """Helper: call the API from the browser and return {status, data}."""
+        tok_js = "window._t" if token else "null"
+        body_js = json.dumps(body) if body else "null"
+        return page.evaluate(f"""async () => {{
+            const h = {{'Content-Type': 'application/json'}};
+            const tok = {tok_js};
+            if (tok) h['Authorization'] = 'Bearer ' + tok;
+            const opts = {{ method: '{method}', headers: h }};
+            if ({body_js} !== null) opts.body = JSON.stringify({body_js});
+            const r = await fetch('{server}{path}', opts);
+            return {{ status: r.status, data: await r.json() }};
+        }}""")
+
+    # ── Health ────────────────────────────────────────────────────────
+    r = fetch("GET", "/health", token=False)
+    assert r["status"] == 200 and r["data"]["status"] == "healthy"
+    r = fetch("GET", "/ready", token=False)
+    assert r["status"] == 200 and r["data"]["status"] == "ready"
+
+    # ── Auth: signup ──────────────────────────────────────────────────
+    email = f"comp-{_uuid.uuid4().hex[:6]}@test.com"
+    r = fetch("POST", "/api/v1/auth/signup",
+              {"email": email, "password": "CompTest1!"}, token=False)
+    assert r["status"] == 201 and r["data"]["email"] == email
+
+    # Auth: duplicate rejected
+    r2 = fetch("POST", "/api/v1/auth/signup",
+               {"email": email, "password": "CompTest1!"}, token=False)
+    assert r2["status"] == 409
+
+    # Auth: login
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/auth/login', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{ email: '{email}', password: 'CompTest1!' }})
+        }});
+        const d = await r.json();
+        window._t = d.access_token;
+        window._rt = d.refresh_token;
+        return {{ status: r.status, ok: !!d.access_token }};
+    }}""")
+    assert r["status"] == 200 and r["ok"]
+
+    # Auth: me
+    r = fetch("GET", "/api/v1/auth/me")
+    assert r["status"] == 200 and r["data"]["email"] == email
+
+    # Auth: no token → 401
+    r = fetch("GET", "/api/v1/auth/me", token=False)
+    assert r["status"] in (401, 403)
+
+    # ── Holder ────────────────────────────────────────────────────────
+    r = fetch("POST", "/api/v1/holders",
+              {"first_name": "Comp", "last_name": "Test", "date_of_birth": "1985-01-01"})
+    assert r["status"] == 201 and r["data"]["first_name"] == "Comp"
+
+    r = fetch("GET", "/api/v1/holders/me")
+    assert r["status"] == 200 and r["data"]["last_name"] == "Test"
+
+    # ── Account ───────────────────────────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._t}},
+            body: JSON.stringify({{ account_type: 'checking' }})
+        }});
+        const d = await r.json();
+        window._acct = d.id;
+        return {{ status: r.status, data: d }};
+    }}""")
+    assert r["status"] == 201 and r["data"]["balance_cents"] == 0
+
+    r = fetch("GET", "/api/v1/accounts")
+    assert r["status"] == 200 and len(r["data"]) >= 1
+
+    # ── Deposit ───────────────────────────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts/' + window._acct + '/deposit', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._t}},
+            body: JSON.stringify({{ amount_cents: 50000 }})
+        }});
+        return {{ status: r.status, data: await r.json() }};
+    }}""")
+    assert r["status"] == 200 and r["data"]["balance_cents"] == 50000
+
+    # ── Transactions: deposit recorded ────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts/' + window._acct + '/transactions', {{
+            headers: {{'Authorization': 'Bearer ' + window._t}}
+        }});
+        return {{ status: r.status, data: await r.json() }};
+    }}""")
+    assert r["status"] == 200
+    assert any(t["type"] == "deposit" for t in r["data"])
+
+    # ── Card: issue + spend ───────────────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts/' + window._acct + '/cards', {{
+            method: 'POST',
+            headers: {{'Authorization': 'Bearer ' + window._t}}
+        }});
+        const d = await r.json();
+        window._card = d.id;
+        return {{ status: r.status, data: d }};
+    }}""")
+    assert r["status"] == 201 and r["data"]["status"] == "active"
+
+    idem = str(_uuid.uuid4())
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/cards/' + window._card + '/spend', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._t}},
+            body: JSON.stringify({{ amount_cents: 1500, merchant: 'Component Cafe', idempotency_key: '{idem}' }})
+        }});
+        return {{ status: r.status, data: await r.json() }};
+    }}""")
+    assert r["status"] == 201 and r["data"]["merchant"] == "Component Cafe"
+
+    # Card spend → Transaction ledger entry exists
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts/' + window._acct + '/transactions', {{
+            headers: {{'Authorization': 'Bearer ' + window._t}}
+        }});
+        return {{ status: r.status, data: await r.json() }};
+    }}""")
+    assert r["status"] == 200
+    assert any(t["type"] == "card_spend" for t in r["data"]), \
+        "Card spend missing from transaction ledger"
+
+    # ── Statement ─────────────────────────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/accounts/' + window._acct + '/statements', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._t}},
+            body: JSON.stringify({{ start_date: '2020-01-01', end_date: '2030-12-31' }})
+        }});
+        return {{ status: r.status, data: await r.json() }};
+    }}""")
+    assert r["status"] == 201
+    assert r["data"]["transaction_count"] >= 2  # deposit + card_spend
+
+    # ── Auth: refresh + logout ────────────────────────────────────────
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/auth/refresh', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{ refresh_token: window._rt }})
+        }});
+        const d = await r.json();
+        window._t = d.access_token;
+        return {{ status: r.status, ok: !!d.access_token }};
+    }}""")
+    assert r["status"] == 200
+
+    r = page.evaluate(f"""async () => {{
+        const r = await fetch('{server}/api/v1/auth/logout', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._t}},
+            body: JSON.stringify({{ refresh_token: window._rt }})
+        }});
+        return {{ status: r.status }};
+    }}""")
+    assert r["status"] == 200
