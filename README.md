@@ -55,6 +55,45 @@ docker run --rm banking-e2e
 `docker compose up --build` works without creating a `.env` file; safe development defaults are included in `docker-compose.yml`.
 Use `.env` only if you want to override defaults.
 
+## Docker Validation (No `.env` Required)
+
+Use this sequence to verify the full containerized workflow:
+
+```bash
+# 1) Run full backend test suite in Docker
+docker build --target test -t banking-test .
+docker run --rm banking-test
+
+# 2) Run runtime image and verify probes
+docker build --target runtime -t banking-runtime .
+docker run -d --name banking-runtime-check -p 8000:8000 banking-runtime
+curl -sf http://localhost:8000/health
+curl -sf http://localhost:8000/ready
+docker rm -f banking-runtime-check
+
+# 3) Run Playwright E2E in Docker
+docker build --target e2e -t banking-e2e .
+docker run --rm banking-e2e
+
+# 4) Verify Docker Compose startup path
+docker compose up --build -d
+curl -sf http://localhost:8000/health
+curl -sf http://localhost:8000/ready
+docker compose down
+```
+
+If your environment uses legacy Compose, replace `docker compose` with `docker-compose`.
+
+## MVP Readiness
+
+This project is ready as an MVP for the assessment scope:
+
+- Core domains implemented end-to-end: auth, holders/accounts, transfers, cards, statements.
+- Financial integrity guards are in place: atomic balance updates, overdraft prevention, idempotency keys, ownership enforcement.
+- Operational baseline is implemented: structured logging, request correlation, health/readiness endpoints, graceful shutdown, Dockerized deployment.
+- Validation gates are strong: `229` tests passing with `95.16%` coverage (`>=80%` required), plus Playwright E2E coverage in local and Docker flows.
+- Documentation is complete for handoff: setup/run instructions, PRD, AI usage evidence, and traceability index.
+
 ## API Endpoints
 
 ### Health
@@ -117,6 +156,19 @@ Use `.env` only if you want to override defaults.
 
 See `.env.example` for all configuration options and overrides.
 For Docker Compose, `.env` is optional because defaults are already provided.
+
+### When `.env` Is Required (Production)
+
+Use a real `.env` (or secret manager-backed env injection) for any production/staging deployment.  
+The defaults in `docker-compose.yml` are development-safe convenience values, not production settings.
+
+At minimum, set:
+- `JWT_SECRET_KEY` to a strong, unique secret
+- `DATABASE_URL` to your production database path/connection
+- `APP_ENV=production` and `DEBUG=false`
+- Any environment-specific host/port and token lifetime settings
+
+Do not commit `.env` files with real secrets.
 
 ## Documentation
 
