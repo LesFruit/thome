@@ -28,9 +28,19 @@ Latest full validation before submission:
 - `uv run --with pytest,playwright,httpx pytest tests/test_playwright.py -v` -> **3 passed**
 - `docker run --rm banking-test` -> **229 passed, 3 skipped**
 - `docker run --rm banking-e2e` -> **3 passed**
+- `docker compose up --build` (no `.env`) -> **service starts and `/health` + `/ready` return success**
 
 ## Submission Readiness
 - AI usage report updated: [`docs/AI_USAGE.md`](./docs/AI_USAGE.md)
 - Final report updated: [`REPORT.MD`](./REPORT.MD)
 - Setup/run instructions updated: [`README.md`](./README.md)
-- Project is ready for submission, pending your final commit/push packaging decisions.
+- Project is ready for submission.
+
+## Sanitized Delivery Package
+We generated a **sanitized zip** from tracked git files only (`git archive`), excluding local/sensitive runtime artifacts such as `.env`, virtual environments, caches, local SQLite test DBs, and `__pycache__` folders.
+
+Yes, the sanitized package still works. After unzip, the receiver should:
+1. Run Docker directly with no extra setup: `docker compose up --build` (defaults are built into `docker-compose.yml`).
+2. Use `.env` only when overriding defaults from `.env.example` (not required for baseline run).
+3. Install dependencies and run via README commands for local non-Docker workflows.
+4. Install Playwright browser binaries if running local browser E2E (`playwright install chromium`), or use Docker `e2e` target.

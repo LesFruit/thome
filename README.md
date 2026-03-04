@@ -42,6 +42,8 @@ uv run scripts/test_client.py
 
 # Docker
 docker compose up --build
+# Fallback for older Docker installs
+docker-compose up --build
 
 # Docker test stages
 docker build --target test -t banking-test .
@@ -49,6 +51,9 @@ docker run --rm banking-test
 docker build --target e2e -t banking-e2e .
 docker run --rm banking-e2e
 ```
+
+`docker compose up --build` works without creating a `.env` file; safe development defaults are included in `docker-compose.yml`.
+Use `.env` only if you want to override defaults.
 
 ## API Endpoints
 
@@ -110,7 +115,8 @@ docker run --rm banking-e2e
 
 ## Environment Variables
 
-See `.env.example` for all configuration options.
+See `.env.example` for all configuration options and overrides.
+For Docker Compose, `.env` is optional because defaults are already provided.
 
 ## Documentation
 
