@@ -29,12 +29,25 @@ uv run --with pytest,httpx,email-validator,pytest-cov pytest tests/ -v --cov=app
 
 # Lint
 uv run --with ruff ruff check app/ tests/
+uv run --with ruff ruff format --check app/ tests/
+
+# Install browser for Playwright E2E
+uv run --with playwright playwright install chromium
+
+# Run Playwright E2E
+uv run --with pytest,playwright,httpx pytest tests/test_playwright.py -v
 
 # E2E demo client
 uv run scripts/test_client.py
 
 # Docker
 docker compose up --build
+
+# Docker test stages
+docker build --target test -t banking-test .
+docker run --rm banking-test
+docker build --target e2e -t banking-e2e .
+docker run --rm banking-e2e
 ```
 
 ## API Endpoints
@@ -101,7 +114,7 @@ See `.env.example` for all configuration options.
 
 ## Documentation
 
-- [REQUIREMENTS.MD](REQUIREMENTS.MD) — Full implementation plan and acceptance criteria
+- [PRD.MD](PRD.MD) — Full implementation plan and acceptance criteria
 - [docs/AI_USAGE.md](docs/AI_USAGE.md) — AI-driven development evidence log
 - [docs/INDEX.md](docs/INDEX.md) — Documentation graph index
 - [CLAUDE.md](CLAUDE.md) — AI agent guidance for this repo

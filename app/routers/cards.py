@@ -67,8 +67,12 @@ def card_spend(
     user: User = Depends(get_current_user),
 ):
     ct, is_new = card_service.card_spend(
-        db, user, card_id, req.amount_cents,
-        req.merchant, req.idempotency_key,
+        db,
+        user,
+        card_id,
+        req.amount_cents,
+        req.merchant,
+        req.idempotency_key,
     )
     if not is_new:
         data = CardTransactionResponse.model_validate(ct).model_dump(mode="json")

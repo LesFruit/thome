@@ -38,16 +38,24 @@ def _h(token):
 def _user(client, email, first="Test", last="User"):
     _signup(client, email)
     tok, ref = _login(client, email)
-    client.post("/api/v1/holders", json={
-        "first_name": first, "last_name": last, "date_of_birth": "1990-01-15",
-    }, headers=_h(tok))
+    client.post(
+        "/api/v1/holders",
+        json={
+            "first_name": first,
+            "last_name": last,
+            "date_of_birth": "1990-01-15",
+        },
+        headers=_h(tok),
+    )
     return tok, ref
 
 
 def _acct(client, tok, typ="checking", bal=0):
     a = client.post("/api/v1/accounts", json={"account_type": typ}, headers=_h(tok)).json()
     if bal > 0:
-        client.post(f"/api/v1/accounts/{a['id']}/deposit", json={"amount_cents": bal}, headers=_h(tok))
+        client.post(
+            f"/api/v1/accounts/{a['id']}/deposit", json={"amount_cents": bal}, headers=_h(tok)
+        )
     return a["id"]
 
 
@@ -65,9 +73,14 @@ class TestStatementEdgeCases:
         """start_date > end_date: should return 0 transactions, closing=opening."""
         tok, _ = _user(client, "stmt-rev@test.com")
         a = _acct(client, tok, bal=50000)
-        resp = client.post(f"/api/v1/accounts/{a}/statements", json={
-            "start_date": "2026-12-31", "end_date": "2026-01-01",
-        }, headers=_h(tok))
+        resp = client.post(
+            f"/api/v1/accounts/{a}/statements",
+            json={
+                "start_date": "2026-12-31",
+                "end_date": "2026-01-01",
+            },
+            headers=_h(tok),
+        )
         # Should succeed (no server-side validation) but yield 0 txns
         assert resp.status_code == 201
         body = resp.json()
@@ -79,9 +92,14 @@ class TestStatementEdgeCases:
         tok, _ = _user(client, "stmt-same@test.com")
         a = _acct(client, tok, bal=100000)
         today = date.today().isoformat()
-        resp = client.post(f"/api/v1/accounts/{a}/statements", json={
-            "start_date": today, "end_date": today,
-        }, headers=_h(tok))
+        resp = client.post(
+            f"/api/v1/accounts/{a}/statements",
+            json={
+                "start_date": today,
+                "end_date": today,
+            },
+            headers=_h(tok),
+        )
         assert resp.status_code == 201
         body = resp.json()
         assert body["transaction_count"] >= 1  # at least the deposit
@@ -93,30 +111,55 @@ class TestStatementEdgeCases:
         a1 = _acct(client, tok, bal=200000)  # $2000
         a2 = _acct(client, tok, "savings", 0)
         # Transfer out $500
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 50000, "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 50000,
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         # Transfer back $200
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a2, "destination_account_id": a1,
-            "amount_cents": 20000, "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a2,
+                "destination_account_id": a1,
+                "amount_cents": 20000,
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         # Card spend $75
         card = client.post(f"/api/v1/accounts/{a1}/cards", headers=_h(tok)).json()
-        client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 7500, "merchant": "Cafe", "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 7500,
+                "merchant": "Cafe",
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         # Second deposit $300
         client.post(f"/api/v1/accounts/{a1}/deposit", json={"amount_cents": 30000}, headers=_h(tok))
 
         today = date.today().isoformat()
-        stmt = client.post(f"/api/v1/accounts/{a1}/statements", json={
-            "start_date": "2020-01-01", "end_date": today,
-        }, headers=_h(tok)).json()
+        stmt = client.post(
+            f"/api/v1/accounts/{a1}/statements",
+            json={
+                "start_date": "2020-01-01",
+                "end_date": today,
+            },
+            headers=_h(tok),
+        ).json()
 
         # Verify math: opening + credits - debits = closing
-        calc = stmt["opening_balance_cents"] + stmt["total_credits_cents"] - stmt["total_debits_cents"]
+        calc = (
+            stmt["opening_balance_cents"] + stmt["total_credits_cents"] - stmt["total_debits_cents"]
+        )
         assert stmt["closing_balance_cents"] == calc
         # Verify actual balance matches
         actual = client.get(f"/api/v1/accounts/{a1}", headers=_h(tok)).json()["balance_cents"]
@@ -126,9 +169,14 @@ class TestStatementEdgeCases:
 
     def test_statement_nonexistent_account(self, client):
         tok, _ = _user(client, "stmt-404@test.com")
-        resp = client.post("/api/v1/accounts/nonexistent-id/statements", json={
-            "start_date": "2020-01-01", "end_date": "2026-12-31",
-        }, headers=_h(tok))
+        resp = client.post(
+            "/api/v1/accounts/nonexistent-id/statements",
+            json={
+                "start_date": "2020-01-01",
+                "end_date": "2026-12-31",
+            },
+            headers=_h(tok),
+        )
         assert resp.status_code == 404
 
     def test_list_statements_empty(self, client):
@@ -156,9 +204,15 @@ class TestHolderValidation:
 
     def test_update_holder_all_fields(self, client):
         tok, _ = _user(client, "holder-all@test.com", "Before", "Name")
-        resp = client.patch("/api/v1/holders/me", json={
-            "first_name": "After", "last_name": "Changed", "date_of_birth": "1985-06-15",
-        }, headers=_h(tok))
+        resp = client.patch(
+            "/api/v1/holders/me",
+            json={
+                "first_name": "After",
+                "last_name": "Changed",
+                "date_of_birth": "1985-06-15",
+            },
+            headers=_h(tok),
+        )
         assert resp.status_code == 200
         body = resp.json()
         assert body["first_name"] == "After"
@@ -210,13 +264,25 @@ class TestCardAccountInteraction:
         c1 = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
         c2 = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
         # Spend on card 1
-        client.post(f"/api/v1/cards/{c1}/spend", json={
-            "amount_cents": 30000, "merchant": "Shop A", "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            f"/api/v1/cards/{c1}/spend",
+            json={
+                "amount_cents": 30000,
+                "merchant": "Shop A",
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         # Spend on card 2
-        client.post(f"/api/v1/cards/{c2}/spend", json={
-            "amount_cents": 20000, "merchant": "Shop B", "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            f"/api/v1/cards/{c2}/spend",
+            json={
+                "amount_cents": 20000,
+                "merchant": "Shop B",
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         bal = client.get(f"/api/v1/accounts/{a}", headers=_h(tok)).json()["balance_cents"]
         assert bal == 50000  # 100000 - 30000 - 20000
 
@@ -225,9 +291,15 @@ class TestCardAccountInteraction:
         tok, _ = _user(client, "empty-merch@test.com")
         a = _acct(client, tok, bal=50000)
         c = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
-        resp = client.post(f"/api/v1/cards/{c}/spend", json={
-            "amount_cents": 100, "merchant": "", "idempotency_key": _key(),
-        }, headers=_h(tok))
+        resp = client.post(
+            f"/api/v1/cards/{c}/spend",
+            json={
+                "amount_cents": 100,
+                "merchant": "",
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         assert resp.status_code == 422
 
     def test_card_not_found(self, client):
@@ -237,9 +309,15 @@ class TestCardAccountInteraction:
 
     def test_card_spend_on_nonexistent_card(self, client):
         tok, _ = _user(client, "spend-404@test.com")
-        resp = client.post("/api/v1/cards/nonexistent-id/spend", json={
-            "amount_cents": 100, "merchant": "X", "idempotency_key": _key(),
-        }, headers=_h(tok))
+        resp = client.post(
+            "/api/v1/cards/nonexistent-id/spend",
+            json={
+                "amount_cents": 100,
+                "merchant": "X",
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         assert resp.status_code == 404
 
 
@@ -310,10 +388,16 @@ class TestTransferConservation:
         # Do several transfers
         for amt in (25000, 10000, 15000, 5000):
             src, dst = (a1, a2) if amt % 2 == 0 else (a2, a1)
-            client.post("/api/v1/transfers", json={
-                "source_account_id": src, "destination_account_id": dst,
-                "amount_cents": amt, "idempotency_key": _key(),
-            }, headers=_h(tok))
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": src,
+                    "destination_account_id": dst,
+                    "amount_cents": amt,
+                    "idempotency_key": _key(),
+                },
+                headers=_h(tok),
+            )
 
         b1 = client.get(f"/api/v1/accounts/{a1}", headers=_h(tok)).json()["balance_cents"]
         b2 = client.get(f"/api/v1/accounts/{a2}", headers=_h(tok)).json()["balance_cents"]
@@ -325,10 +409,16 @@ class TestTransferConservation:
         a1 = _acct(client, tok, bal=10000)
         a2 = _acct(client, tok, "savings", 0)
         # Attempt overdraft
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 99999, "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 99999,
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         b1 = client.get(f"/api/v1/accounts/{a1}", headers=_h(tok)).json()["balance_cents"]
         b2 = client.get(f"/api/v1/accounts/{a2}", headers=_h(tok)).json()["balance_cents"]
         assert b1 == 10000
@@ -356,16 +446,27 @@ class TestFrozenClosedBalance:
         # Freeze
         client.patch(f"/api/v1/accounts/{a1}", json={"status": "frozen"}, headers=_h(tok))
         # Can't close (has balance)
-        assert client.patch(
-            f"/api/v1/accounts/{a1}", json={"status": "closed"}, headers=_h(tok),
-        ).status_code == 400
+        assert (
+            client.patch(
+                f"/api/v1/accounts/{a1}",
+                json={"status": "closed"},
+                headers=_h(tok),
+            ).status_code
+            == 400
+        )
         # Unfreeze
         client.patch(f"/api/v1/accounts/{a1}", json={"status": "active"}, headers=_h(tok))
         # Drain
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 50000, "idempotency_key": _key(),
-        }, headers=_h(tok))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 50000,
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok),
+        )
         # Now close succeeds
         resp = client.patch(f"/api/v1/accounts/{a1}", json={"status": "closed"}, headers=_h(tok))
         assert resp.status_code == 200
@@ -393,7 +494,9 @@ class TestDepositLedger:
         tok, _ = _user(client, "dep-multi@test.com")
         a = _acct(client, tok, bal=0)
         for amt in (10000, 20000, 30000):
-            client.post(f"/api/v1/accounts/{a}/deposit", json={"amount_cents": amt}, headers=_h(tok))
+            client.post(
+                f"/api/v1/accounts/{a}/deposit", json={"amount_cents": amt}, headers=_h(tok)
+            )
         bal = client.get(f"/api/v1/accounts/{a}", headers=_h(tok)).json()["balance_cents"]
         assert bal == 60000
         txns = client.get(f"/api/v1/accounts/{a}/transactions", headers=_h(tok)).json()
@@ -413,13 +516,25 @@ class TestCardSpendIdempotency:
         c1 = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
         c2 = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
         key = _key()
-        r1 = client.post(f"/api/v1/cards/{c1}/spend", json={
-            "amount_cents": 5000, "merchant": "A", "idempotency_key": key,
-        }, headers=_h(tok))
+        r1 = client.post(
+            f"/api/v1/cards/{c1}/spend",
+            json={
+                "amount_cents": 5000,
+                "merchant": "A",
+                "idempotency_key": key,
+            },
+            headers=_h(tok),
+        )
         assert r1.status_code == 201
-        r2 = client.post(f"/api/v1/cards/{c2}/spend", json={
-            "amount_cents": 5000, "merchant": "A", "idempotency_key": key,
-        }, headers=_h(tok))
+        r2 = client.post(
+            f"/api/v1/cards/{c2}/spend",
+            json={
+                "amount_cents": 5000,
+                "merchant": "A",
+                "idempotency_key": key,
+            },
+            headers=_h(tok),
+        )
         # Should return the first transaction (idempotency replay)
         assert r2.status_code == 200
         assert r2.json()["id"] == r1.json()["id"]
@@ -441,14 +556,25 @@ class TestTransferStatementIntegration:
         a2 = _acct(client, tok, "savings", 0)
         # 3 transfers into savings
         for amt in (30000, 20000, 10000):
-            client.post("/api/v1/transfers", json={
-                "source_account_id": a1, "destination_account_id": a2,
-                "amount_cents": amt, "idempotency_key": _key(),
-            }, headers=_h(tok))
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": a1,
+                    "destination_account_id": a2,
+                    "amount_cents": amt,
+                    "idempotency_key": _key(),
+                },
+                headers=_h(tok),
+            )
         today = date.today().isoformat()
-        stmt = client.post(f"/api/v1/accounts/{a2}/statements", json={
-            "start_date": "2020-01-01", "end_date": today,
-        }, headers=_h(tok)).json()
+        stmt = client.post(
+            f"/api/v1/accounts/{a2}/statements",
+            json={
+                "start_date": "2020-01-01",
+                "end_date": today,
+            },
+            headers=_h(tok),
+        ).json()
         assert stmt["opening_balance_cents"] == 0
         assert stmt["total_credits_cents"] == 60000
         assert stmt["total_debits_cents"] == 0
@@ -468,14 +594,20 @@ class TestRapidSequential:
         a2 = _acct(client, tok, "savings", 0)
         # 10 rapid transfers of $50 each
         for _ in range(10):
-            client.post("/api/v1/transfers", json={
-                "source_account_id": a1, "destination_account_id": a2,
-                "amount_cents": 5000, "idempotency_key": _key(),
-            }, headers=_h(tok))
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": a1,
+                    "destination_account_id": a2,
+                    "amount_cents": 5000,
+                    "idempotency_key": _key(),
+                },
+                headers=_h(tok),
+            )
         b1 = client.get(f"/api/v1/accounts/{a1}", headers=_h(tok)).json()["balance_cents"]
         b2 = client.get(f"/api/v1/accounts/{a2}", headers=_h(tok)).json()["balance_cents"]
-        assert b1 == 50000   # 100000 - 10*5000
-        assert b2 == 50000   # 0 + 10*5000
+        assert b1 == 50000  # 100000 - 10*5000
+        assert b2 == 50000  # 0 + 10*5000
         assert b1 + b2 == 100000  # Conservation
 
     def test_rapid_card_spends(self, client):
@@ -484,9 +616,15 @@ class TestRapidSequential:
         c = client.post(f"/api/v1/accounts/{a}/cards", headers=_h(tok)).json()["id"]
         # 10 spends of $50 each
         for i in range(10):
-            client.post(f"/api/v1/cards/{c}/spend", json={
-                "amount_cents": 5000, "merchant": f"Store-{i}", "idempotency_key": _key(),
-            }, headers=_h(tok))
+            client.post(
+                f"/api/v1/cards/{c}/spend",
+                json={
+                    "amount_cents": 5000,
+                    "merchant": f"Store-{i}",
+                    "idempotency_key": _key(),
+                },
+                headers=_h(tok),
+            )
         bal = client.get(f"/api/v1/accounts/{a}", headers=_h(tok)).json()["balance_cents"]
         assert bal == 50000  # 100000 - 10*5000
 
@@ -501,7 +639,9 @@ class TestErrorEnvelopes:
         tok, _ = _user(client, "env-400@test.com")
         a = _acct(client, tok, bal=0)
         # Deposit zero → 400
-        resp = client.post(f"/api/v1/accounts/{a}/deposit", json={"amount_cents": 0}, headers=_h(tok))
+        resp = client.post(
+            f"/api/v1/accounts/{a}/deposit", json={"amount_cents": 0}, headers=_h(tok)
+        )
         assert resp.status_code == 400
         body = resp.json()
         assert "error" in body
@@ -549,10 +689,16 @@ class TestCrossUserTransferVerification:
         acct_a = _acct(client, tok_a, bal=100000)
         acct_b = _acct(client, tok_b, bal=0)
         # A sends $250 to B
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": acct_a, "destination_account_id": acct_b,
-            "amount_cents": 25000, "idempotency_key": _key(),
-        }, headers=_h(tok_a))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": acct_a,
+                "destination_account_id": acct_b,
+                "amount_cents": 25000,
+                "idempotency_key": _key(),
+            },
+            headers=_h(tok_a),
+        )
         assert resp.status_code == 201
         xfer_id = resp.json()["id"]
 

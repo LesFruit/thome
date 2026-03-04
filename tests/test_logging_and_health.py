@@ -10,10 +10,16 @@ def test_json_log_format(client, capsys):
     client.get("/health")
     # We can at least verify the logger setup works
     from app.logging_config import JSONFormatter
+
     formatter = JSONFormatter()
     record = logging.LogRecord(
-        name="test", level=logging.INFO, pathname="", lineno=0,
-        msg="Test message", args=(), exc_info=None,
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="Test message",
+        args=(),
+        exc_info=None,
     )
     output = formatter.format(record)
     parsed = json.loads(output)
@@ -26,10 +32,16 @@ def test_json_log_format(client, capsys):
 def test_json_log_includes_request_context():
     """Log records with request context fields are included in JSON output."""
     from app.logging_config import JSONFormatter
+
     formatter = JSONFormatter()
     record = logging.LogRecord(
-        name="test", level=logging.INFO, pathname="", lineno=0,
-        msg="Access", args=(), exc_info=None,
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="Access",
+        args=(),
+        exc_info=None,
     )
     record.request_id = "req-123"
     record.method = "GET"
@@ -54,10 +66,13 @@ def test_error_envelope_no_traceback_on_500(client):
 
 def test_validation_error_returns_safe_details(client):
     """Validation errors return field-level details without internal leakage."""
-    resp = client.post("/api/v1/auth/signup", json={
-        "email": "not-an-email",
-        "password": "StrongPass1!",
-    })
+    resp = client.post(
+        "/api/v1/auth/signup",
+        json={
+            "email": "not-an-email",
+            "password": "StrongPass1!",
+        },
+    )
     assert resp.status_code == 422
     body = resp.json()
     assert "error" in body

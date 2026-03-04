@@ -50,17 +50,32 @@ def server():
         if os.path.exists(f):
             os.unlink(f)
 
-    env = {**os.environ,
-           "DATABASE_URL": f"sqlite:///{os.path.abspath(DB_PATH)}",
-           "JWT_SECRET_KEY": "e2e-test-secret"}
+    env = {
+        **os.environ,
+        "DATABASE_URL": f"sqlite:///{os.path.abspath(DB_PATH)}",
+        "JWT_SECRET_KEY": "e2e-test-secret",
+    }
     proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app",
-         "--host", "127.0.0.1", "--port", "8877", "--log-level", "warning"],
-        cwd=ROOT_DIR, env=env,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "app.main:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8877",
+            "--log-level",
+            "warning",
+        ],
+        cwd=ROOT_DIR,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     import httpx
+
     for _ in range(40):
         try:
             resp = httpx.get(f"{BASE_URL}/health", timeout=1)
@@ -110,8 +125,20 @@ def browser_page(server):
         for webm in globmod.glob(os.path.join(VIDEO_DIR, "*.webm")):
             mp4 = webm.rsplit(".", 1)[0] + ".mp4"
             subprocess.run(
-                ["ffmpeg", "-y", "-i", webm, "-c:v", "libx264", "-preset", "fast",
-                 "-crf", "23", "-an", mp4],
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    webm,
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "fast",
+                    "-crf",
+                    "23",
+                    "-an",
+                    mp4,
+                ],
                 capture_output=True,
             )
             if os.path.exists(mp4):
@@ -122,6 +149,7 @@ def browser_page(server):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def wait(page, ms=1200):
     page.wait_for_timeout(ms)
 
@@ -131,8 +159,10 @@ def expect_toast(page, kind, text_fragment=None):
     toasts = page.locator(f".toast-{kind}")
     assert toasts.count() > 0, f"Expected .toast-{kind} but found none"
     if text_fragment:
-        found = any(text_fragment.lower() in toasts.nth(i).inner_text().lower()
-                     for i in range(toasts.count()))
+        found = any(
+            text_fragment.lower() in toasts.nth(i).inner_text().lower()
+            for i in range(toasts.count())
+        )
         assert found, f"No .toast-{kind} contains '{text_fragment}'"
 
 
@@ -149,6 +179,7 @@ def xfer_tab(page, tab):
 # ═══════════════════════════════════════════════════════════════════════════
 #  STORY 1 — New Customer Journey
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def test_01_new_customer_journey(server, browser_page):
     """Complete new-customer flow: signup → profile → accounts → deposit →
@@ -341,6 +372,7 @@ def test_01_new_customer_journey(server, browser_page):
 #  STORY 2 — Returning Customer (data persistence + more edge cases)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def test_02_returning_customer(server, browser_page):
     """Returning customer logs in and verifies all data persisted from Story 1.
     Then tests blocked-card spend and confirms the full audit trail."""
@@ -432,6 +464,7 @@ def test_02_returning_customer(server, browser_page):
 #  COMPONENT TESTS — API-level verification via browser fetch
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def test_03_api_components(server, browser_page):
     """Component-level API tests run from the browser context.
     Validates each service independently: auth, holders, accounts,
@@ -463,13 +496,15 @@ def test_03_api_components(server, browser_page):
 
     # ── Auth: signup ──────────────────────────────────────────────────
     email = f"comp-{_uuid.uuid4().hex[:6]}@test.com"
-    r = fetch("POST", "/api/v1/auth/signup",
-              {"email": email, "password": "CompTest1!"}, token=False)
+    r = fetch(
+        "POST", "/api/v1/auth/signup", {"email": email, "password": "CompTest1!"}, token=False
+    )
     assert r["status"] == 201 and r["data"]["email"] == email
 
     # Auth: duplicate rejected
-    r2 = fetch("POST", "/api/v1/auth/signup",
-               {"email": email, "password": "CompTest1!"}, token=False)
+    r2 = fetch(
+        "POST", "/api/v1/auth/signup", {"email": email, "password": "CompTest1!"}, token=False
+    )
     assert r2["status"] == 409
 
     # Auth: login
@@ -495,8 +530,11 @@ def test_03_api_components(server, browser_page):
     assert r["status"] in (401, 403)
 
     # ── Holder ────────────────────────────────────────────────────────
-    r = fetch("POST", "/api/v1/holders",
-              {"first_name": "Comp", "last_name": "Test", "date_of_birth": "1985-01-01"})
+    r = fetch(
+        "POST",
+        "/api/v1/holders",
+        {"first_name": "Comp", "last_name": "Test", "date_of_birth": "1985-01-01"},
+    )
     assert r["status"] == 201 and r["data"]["first_name"] == "Comp"
 
     r = fetch("GET", "/api/v1/holders/me")
@@ -570,8 +608,9 @@ def test_03_api_components(server, browser_page):
         return {{ status: r.status, data: await r.json() }};
     }}""")
     assert r["status"] == 200
-    assert any(t["type"] == "card_spend" for t in r["data"]), \
+    assert any(t["type"] == "card_spend" for t in r["data"]), (
         "Card spend missing from transaction ledger"
+    )
 
     # ── Statement ─────────────────────────────────────────────────────
     r = page.evaluate(f"""async () => {{

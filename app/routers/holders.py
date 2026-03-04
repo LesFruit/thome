@@ -33,7 +33,8 @@ def update_holder(
     user: User = Depends(get_current_user),
 ):
     return account_service.update_holder(
-        db, user,
+        db,
+        user,
         first_name=req.first_name,
         last_name=req.last_name,
         date_of_birth=req.date_of_birth,

@@ -10,12 +10,21 @@ from app.models.user import User
 
 # --- Holders ---
 
+
 def create_holder(
-    db: Session, user: User, first_name: str, last_name: str, dob: date,
+    db: Session,
+    user: User,
+    first_name: str,
+    last_name: str,
+    dob: date,
 ) -> AccountHolder:
-    existing = db.query(AccountHolder).filter(
-        AccountHolder.user_id == user.id,
-    ).first()
+    existing = (
+        db.query(AccountHolder)
+        .filter(
+            AccountHolder.user_id == user.id,
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -23,8 +32,10 @@ def create_holder(
         )
 
     holder = AccountHolder(
-        user_id=user.id, first_name=first_name,
-        last_name=last_name, date_of_birth=dob,
+        user_id=user.id,
+        first_name=first_name,
+        last_name=last_name,
+        date_of_birth=dob,
     )
     db.add(holder)
     db.commit()
@@ -50,6 +61,7 @@ def update_holder(db: Session, user: User, **fields) -> AccountHolder:
 
 
 # --- Accounts ---
+
 
 def _get_holder_for_user(db: Session, user: User) -> AccountHolder:
     holder = db.query(AccountHolder).filter(AccountHolder.user_id == user.id).first()

@@ -73,9 +73,9 @@ Tests use an isolated SQLite DB (`test_banking.db`). The `conftest.py` autouse f
 
 Coverage minimum is 80% (configured in pyproject.toml).
 
-## Documentation Requirements
+## Documentation PRD
 
 Every significant change must be traced in:
 - **`docs/AI_USAGE.md`** — AI prompts, iterations, what failed, what was corrected, manual decisions.
 - **`docs/INDEX.md`** — RAG-graph style index with document nodes, relationship edges, and retrieval tags. Update when adding/changing docs.
-- **`REQUIREMENTS.MD`** — canonical implementation plan. Sections 4.1–4.15 define workstreams; sections 9–15 contain embedded checklists (security, release, SLO, runbooks, demo evidence, traceability matrix).
+- **`PRD.MD`** — canonical implementation plan. Sections 4.1–4.15 define workstreams; sections 9–15 contain embedded checklists (security, release, SLO, runbooks, demo evidence, traceability matrix).

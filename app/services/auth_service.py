@@ -59,10 +59,14 @@ def login(db: Session, email: str, password: str) -> dict:
 
 def refresh(db: Session, raw_refresh_token: str) -> dict:
     token_hash = _hash_refresh_token(raw_refresh_token)
-    stored = db.query(RefreshToken).filter(
-        RefreshToken.token_hash == token_hash,
-        RefreshToken.revoked.is_(False),
-    ).first()
+    stored = (
+        db.query(RefreshToken)
+        .filter(
+            RefreshToken.token_hash == token_hash,
+            RefreshToken.revoked.is_(False),
+        )
+        .first()
+    )
 
     if not stored:
         raise HTTPException(

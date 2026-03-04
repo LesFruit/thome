@@ -3,6 +3,7 @@
 from datetime import UTC, date, datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.account import Account, AccountHolder
@@ -22,18 +23,41 @@ def _enforce_account_ownership(db: Session, user: User, account_id: str) -> Acco
 
 
 def generate_statement(
-    db: Session, user: User, account_id: str, start_date: date, end_date: date,
+    db: Session,
+    user: User,
+    account_id: str,
+    start_date: date,
+    end_date: date,
 ) -> Statement:
     _enforce_account_ownership(db, user, account_id)
+
+    existing = (
+        db.query(Statement)
+        .filter(
+            Statement.account_id == account_id,
+            Statement.start_date == start_date,
+            Statement.end_date == end_date,
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Statement already exists for this account and period",
+        )
 
     start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=UTC)
     end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59, tzinfo=UTC)
 
     # Transactions before the period (for opening balance)
-    pre_txns = db.query(Transaction).filter(
-        Transaction.account_id == account_id,
-        Transaction.created_at < start_dt,
-    ).all()
+    pre_txns = (
+        db.query(Transaction)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.created_at < start_dt,
+        )
+        .all()
+    )
 
     opening_balance = 0
     for t in pre_txns:
@@ -43,11 +67,15 @@ def generate_statement(
             opening_balance -= t.amount_cents
 
     # Transactions in the period
-    period_txns = db.query(Transaction).filter(
-        Transaction.account_id == account_id,
-        Transaction.created_at >= start_dt,
-        Transaction.created_at <= end_dt,
-    ).all()
+    period_txns = (
+        db.query(Transaction)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.created_at >= start_dt,
+            Transaction.created_at <= end_dt,
+        )
+        .all()
+    )
 
     total_debits = sum(t.amount_cents for t in period_txns if t.type in ("debit", "card_spend"))
     total_credits = sum(t.amount_cents for t in period_txns if t.type in ("credit", "deposit"))
@@ -64,7 +92,14 @@ def generate_statement(
         transaction_count=len(period_txns),
     )
     db.add(stmt)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Statement already exists for this account and period",
+        ) from None
     db.refresh(stmt)
     return stmt
 

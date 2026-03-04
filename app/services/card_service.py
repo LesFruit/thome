@@ -68,15 +68,23 @@ def update_card_status(db: Session, user: User, card_id: str, new_status: str) -
 
 
 def card_spend(
-    db: Session, user: User, card_id: str,
-    amount_cents: int, merchant: str, idempotency_key: str,
+    db: Session,
+    user: User,
+    card_id: str,
+    amount_cents: int,
+    merchant: str,
+    idempotency_key: str,
 ) -> tuple[CardTransaction, bool]:
     """Returns (card_transaction, is_new)."""
 
     # Idempotency
-    existing = db.query(CardTransaction).filter(
-        CardTransaction.idempotency_key == idempotency_key,
-    ).first()
+    existing = (
+        db.query(CardTransaction)
+        .filter(
+            CardTransaction.idempotency_key == idempotency_key,
+        )
+        .first()
+    )
     if existing:
         return existing, False
 
@@ -131,12 +139,14 @@ def card_spend(
     db.add(ct)
 
     # Ledger entry
-    db.add(Transaction(
-        account_id=card.account_id,
-        type="card_spend",
-        amount_cents=amount_cents,
-        description=f"Card spend at {merchant}",
-    ))
+    db.add(
+        Transaction(
+            account_id=card.account_id,
+            type="card_spend",
+            amount_cents=amount_cents,
+            description=f"Card spend at {merchant}",
+        )
+    )
 
     db.commit()
     db.refresh(ct)

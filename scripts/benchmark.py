@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick SLO/SLI latency benchmark for section 13 of REQUIREMENTS.MD."""
+"""Quick SLO/SLI latency benchmark for section 13 of PRD.MD."""
 # /// script
 # dependencies = ["httpx", "fastapi", "uvicorn", "sqlalchemy", "pydantic", "pydantic-settings", "python-jose[cryptography]", "bcrypt", "python-multipart", "python-dateutil", "email-validator"]
 # ///

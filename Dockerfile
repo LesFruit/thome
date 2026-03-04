@@ -27,7 +27,15 @@ COPY pyproject.toml .
 ENV JWT_SECRET_KEY=test-secret-key
 CMD ["pytest", "tests/", "-v", "--cov=app", "--cov-report=term-missing", "--cov-fail-under=80"]
 
-# Stage 3: Runtime — lean image with app code + deps
+# Stage 3: E2E — Playwright-enabled image for browser tests
+FROM test AS e2e
+
+RUN pip install --no-cache-dir playwright && \
+    python -m playwright install --with-deps chromium
+
+CMD ["pytest", "tests/test_playwright.py", "-v"]
+
+# Stage 4: Runtime — lean image with app code + deps
 FROM python:3.12-slim AS runtime
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser

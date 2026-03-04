@@ -1,15 +1,22 @@
 """Pydantic schemas for cards."""
 
 from datetime import date, datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, field_validator
+
+
+class CardStatus(StrEnum):
+    active = "active"
+    blocked = "blocked"
+    cancelled = "cancelled"
 
 
 class CardResponse(BaseModel):
     id: str
     account_id: str
     card_number: str
-    status: str
+    status: CardStatus
     expiry_date: date
     created_at: datetime
 
@@ -17,7 +24,7 @@ class CardResponse(BaseModel):
 
 
 class CardUpdateRequest(BaseModel):
-    status: str
+    status: CardStatus
 
 
 class CardSpendRequest(BaseModel):

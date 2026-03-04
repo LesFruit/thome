@@ -1,6 +1,6 @@
 # Recreation Implementation Plan (AI-Driven, Production-Ready Banking Service)
 
-This document is a detailed execution plan to create the project against the stated assessment requirements.
+This document is a detailed execution plan to create the project against the stated assessment PRD.
 It is the single-source-of-truth recreation document and includes embedded operational checklists/templates.
 
 Primary objectives:
@@ -595,7 +595,7 @@ This section is the canonical runbook summary. Do not maintain separate mirror r
 | Readiness failures | `/ready` unstable/unavailable | keep out of rotation | health/ready checks + config/log review | recurring oscillation |
 | Token/revocation issues | abnormal auth refresh failures | scope impact and preserve evidence | auth/error test runs + log scan | cross-client persistent failure |
 
-Runbook content requirements:
+Runbook content PRD:
 - symptoms
 - containment
 - diagnosis commands
@@ -743,7 +743,7 @@ Project recreation is complete only when all are true:
 - Required service components are implemented and verified.
 - SQLite-backed domain behavior satisfies financial invariants.
 - Tests cover unit, integration, API E2E, frontend E2E, and concurrency risk.
-- Docker requirements are implemented and validated.
+- Docker PRD are implemented and validated.
 - Logging/monitoring/health/lifecycle behaviors are production-ready.
 - Security checklist, release checklist, runbooks, demo evidence pack, and SLO/SLI docs are complete and current.
 - Traceability matrix is complete for all required assessment components.

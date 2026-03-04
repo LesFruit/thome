@@ -20,9 +20,12 @@ def _enforce_account_ownership(db: Session, user: User, account_id: str) -> Acco
 
 
 def create_transfer(
-    db: Session, user: User,
-    source_account_id: str, destination_account_id: str,
-    amount_cents: int, idempotency_key: str,
+    db: Session,
+    user: User,
+    source_account_id: str,
+    destination_account_id: str,
+    amount_cents: int,
+    idempotency_key: str,
 ) -> tuple[Transfer, bool]:
     """Returns (transfer, is_new). is_new=False means idempotency replay."""
 
@@ -95,20 +98,24 @@ def create_transfer(
     db.flush()  # get transfer.id
 
     # Double-entry ledger: debit + credit transaction records
-    db.add(Transaction(
-        account_id=source_account_id,
-        transfer_id=transfer.id,
-        type="debit",
-        amount_cents=amount_cents,
-        description=f"Transfer to {destination_account_id}",
-    ))
-    db.add(Transaction(
-        account_id=destination_account_id,
-        transfer_id=transfer.id,
-        type="credit",
-        amount_cents=amount_cents,
-        description=f"Transfer from {source_account_id}",
-    ))
+    db.add(
+        Transaction(
+            account_id=source_account_id,
+            transfer_id=transfer.id,
+            type="debit",
+            amount_cents=amount_cents,
+            description=f"Transfer to {destination_account_id}",
+        )
+    )
+    db.add(
+        Transaction(
+            account_id=destination_account_id,
+            transfer_id=transfer.id,
+            type="credit",
+            amount_cents=amount_cents,
+            description=f"Transfer from {source_account_id}",
+        )
+    )
 
     db.commit()
     db.refresh(transfer)
@@ -140,12 +147,14 @@ def deposit(db: Session, user: User, account_id: str, amount_cents: int) -> Acco
             detail="Amount must be positive",
         )
     account.balance_cents += amount_cents
-    db.add(Transaction(
-        account_id=account_id,
-        type="deposit",
-        amount_cents=amount_cents,
-        description="Deposit",
-    ))
+    db.add(
+        Transaction(
+            account_id=account_id,
+            type="deposit",
+            amount_cents=amount_cents,
+            description="Deposit",
+        )
+    )
     db.commit()
     db.refresh(account)
     return account

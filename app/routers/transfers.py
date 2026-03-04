@@ -26,8 +26,12 @@ def create_transfer(
     user: User = Depends(get_current_user),
 ):
     transfer, is_new = transfer_service.create_transfer(
-        db, user, req.source_account_id, req.destination_account_id,
-        req.amount_cents, req.idempotency_key,
+        db,
+        user,
+        req.source_account_id,
+        req.destination_account_id,
+        req.amount_cents,
+        req.idempotency_key,
     )
     if not is_new:
         data = TransferResponse.model_validate(transfer).model_dump(mode="json")

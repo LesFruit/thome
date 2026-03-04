@@ -39,16 +39,24 @@ def _create_user(client, email, first="Test", last="User"):
     """Full setup: signup + login + holder. Returns (token, refresh_token)."""
     _signup(client, email)
     token, refresh = _login(client, email)
-    client.post("/api/v1/holders", json={
-        "first_name": first, "last_name": last, "date_of_birth": "1990-01-15",
-    }, headers=_auth(token))
+    client.post(
+        "/api/v1/holders",
+        json={
+            "first_name": first,
+            "last_name": last,
+            "date_of_birth": "1990-01-15",
+        },
+        headers=_auth(token),
+    )
     return token, refresh
 
 
 def _create_funded_account(client, token, acct_type="checking", amount_cents=100000):
     """Create account and deposit. Returns account_id."""
     acct = client.post(
-        "/api/v1/accounts", json={"account_type": acct_type}, headers=_auth(token),
+        "/api/v1/accounts",
+        json={"account_type": acct_type},
+        headers=_auth(token),
     ).json()
     if amount_cents > 0:
         client.post(
@@ -82,7 +90,9 @@ class TestSchemaValidation:
         token, _ = _create_user(client, "schema2@test.com")
         for t in ("checking", "savings"):
             resp = client.post(
-                "/api/v1/accounts", json={"account_type": t}, headers=_auth(token),
+                "/api/v1/accounts",
+                json={"account_type": t},
+                headers=_auth(token),
             )
             assert resp.status_code == 201
 
@@ -99,15 +109,29 @@ class TestSchemaValidation:
     def test_missing_required_fields(self, client):
         token, _ = _create_user(client, "schema4@test.com")
         # Account without type
-        assert client.post(
-            "/api/v1/accounts", json={}, headers=_auth(token),
-        ).status_code == 422
+        assert (
+            client.post(
+                "/api/v1/accounts",
+                json={},
+                headers=_auth(token),
+            ).status_code
+            == 422
+        )
         # Transfer without idempotency key
         a1 = _create_funded_account(client, token)
         a2 = _create_funded_account(client, token, "savings", 0)
-        assert client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2, "amount_cents": 100,
-        }, headers=_auth(token)).status_code == 422
+        assert (
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": a1,
+                    "destination_account_id": a2,
+                    "amount_cents": 100,
+                },
+                headers=_auth(token),
+            ).status_code
+            == 422
+        )
 
 
 # ── 2. Account Status Guards ────────────────────────────────────────────
@@ -167,10 +191,16 @@ class TestAccountStatusGuards:
         a1 = _create_funded_account(client, token, amount_cents=50000)
         a2 = _create_funded_account(client, token, "savings", 0)
         client.patch(f"/api/v1/accounts/{a1}", json={"status": "frozen"}, headers=_auth(token))
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 100, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 100,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 400
 
     def test_transfer_to_frozen_rejected(self, client):
@@ -178,10 +208,16 @@ class TestAccountStatusGuards:
         a1 = _create_funded_account(client, token, amount_cents=50000)
         a2 = _create_funded_account(client, token, "savings", 0)
         client.patch(f"/api/v1/accounts/{a2}", json={"status": "frozen"}, headers=_auth(token))
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 100, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 100,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 400
 
     def test_transfer_to_closed_rejected(self, client):
@@ -189,10 +225,16 @@ class TestAccountStatusGuards:
         a1 = _create_funded_account(client, token, amount_cents=50000)
         a2 = _create_funded_account(client, token, "savings", 0)
         client.patch(f"/api/v1/accounts/{a2}", json={"status": "closed"}, headers=_auth(token))
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 100, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 100,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 400
 
     def test_card_spend_on_frozen_account_rejected(self, client):
@@ -200,9 +242,15 @@ class TestAccountStatusGuards:
         acct_id = _create_funded_account(client, token, amount_cents=50000)
         card = client.post(f"/api/v1/accounts/{acct_id}/cards", headers=_auth(token)).json()
         client.patch(f"/api/v1/accounts/{acct_id}", json={"status": "frozen"}, headers=_auth(token))
-        resp = client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 100, "merchant": "Test", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 100,
+                "merchant": "Test",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 400
 
 
@@ -215,41 +263,53 @@ class TestAccountStateMachine:
     def test_active_to_frozen(self, client):
         token, _ = _create_user(client, "sm1@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token)
+        )
         assert resp.status_code == 200 and resp.json()["status"] == "frozen"
 
     def test_active_to_closed(self, client):
         token, _ = _create_user(client, "sm2@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token)
+        )
         assert resp.status_code == 200 and resp.json()["status"] == "closed"
 
     def test_frozen_to_active(self, client):
         token, _ = _create_user(client, "sm3@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
         client.patch(f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token))
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "active"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "active"}, headers=_auth(token)
+        )
         assert resp.status_code == 200 and resp.json()["status"] == "active"
 
     def test_frozen_to_closed(self, client):
         token, _ = _create_user(client, "sm4@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
         client.patch(f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token))
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token)
+        )
         assert resp.status_code == 200 and resp.json()["status"] == "closed"
 
     def test_closed_to_active_rejected(self, client):
         token, _ = _create_user(client, "sm5@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
         client.patch(f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token))
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "active"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "active"}, headers=_auth(token)
+        )
         assert resp.status_code == 400
 
     def test_closed_to_frozen_rejected(self, client):
         token, _ = _create_user(client, "sm6@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
         client.patch(f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token))
-        resp = client.patch(f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token))
+        resp = client.patch(
+            f"/api/v1/accounts/{a}", json={"status": "frozen"}, headers=_auth(token)
+        )
         assert resp.status_code == 400
 
 
@@ -268,51 +328,94 @@ class TestCardStateMachine:
     def test_block_then_unblock_then_spend(self, client):
         token, acct_id, card_id = self._setup(client, "csm1@test.com")
         # Block
-        r = client.patch(f"/api/v1/cards/{card_id}", json={"status": "blocked"}, headers=_auth(token))
+        r = client.patch(
+            f"/api/v1/cards/{card_id}", json={"status": "blocked"}, headers=_auth(token)
+        )
         assert r.json()["status"] == "blocked"
         # Spend fails
-        r = client.post(f"/api/v1/cards/{card_id}/spend", json={
-            "amount_cents": 100, "merchant": "X", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        r = client.post(
+            f"/api/v1/cards/{card_id}/spend",
+            json={
+                "amount_cents": 100,
+                "merchant": "X",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert r.status_code == 400
         # Unblock
-        r = client.patch(f"/api/v1/cards/{card_id}", json={"status": "active"}, headers=_auth(token))
+        r = client.patch(
+            f"/api/v1/cards/{card_id}", json={"status": "active"}, headers=_auth(token)
+        )
         assert r.json()["status"] == "active"
         # Spend succeeds
-        r = client.post(f"/api/v1/cards/{card_id}/spend", json={
-            "amount_cents": 1000, "merchant": "Coffee", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        r = client.post(
+            f"/api/v1/cards/{card_id}/spend",
+            json={
+                "amount_cents": 1000,
+                "merchant": "Coffee",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert r.status_code == 201
 
     def test_cancel_is_terminal(self, client):
         token, _, card_id = self._setup(client, "csm2@test.com")
         client.patch(f"/api/v1/cards/{card_id}", json={"status": "cancelled"}, headers=_auth(token))
         # Can't reactivate
-        assert client.patch(
-            f"/api/v1/cards/{card_id}", json={"status": "active"}, headers=_auth(token),
-        ).status_code == 400
+        assert (
+            client.patch(
+                f"/api/v1/cards/{card_id}",
+                json={"status": "active"},
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
         # Can't block
-        assert client.patch(
-            f"/api/v1/cards/{card_id}", json={"status": "blocked"}, headers=_auth(token),
-        ).status_code == 400
+        assert (
+            client.patch(
+                f"/api/v1/cards/{card_id}",
+                json={"status": "blocked"},
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
         # Can't spend
-        assert client.post(f"/api/v1/cards/{card_id}/spend", json={
-            "amount_cents": 100, "merchant": "X", "idempotency_key": _idem(),
-        }, headers=_auth(token)).status_code == 400
+        assert (
+            client.post(
+                f"/api/v1/cards/{card_id}/spend",
+                json={
+                    "amount_cents": 100,
+                    "merchant": "X",
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
 
     def test_blocked_to_cancelled(self, client):
         token, _, card_id = self._setup(client, "csm3@test.com")
         client.patch(f"/api/v1/cards/{card_id}", json={"status": "blocked"}, headers=_auth(token))
-        r = client.patch(f"/api/v1/cards/{card_id}", json={"status": "cancelled"}, headers=_auth(token))
+        r = client.patch(
+            f"/api/v1/cards/{card_id}", json={"status": "cancelled"}, headers=_auth(token)
+        )
         assert r.status_code == 200
         assert r.json()["status"] == "cancelled"
 
     def test_card_spend_creates_transaction_record(self, client):
         """Verify card spend appears in account transaction ledger."""
         token, acct_id, card_id = self._setup(client, "csm4@test.com")
-        client.post(f"/api/v1/cards/{card_id}/spend", json={
-            "amount_cents": 2500, "merchant": "Bookstore", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            f"/api/v1/cards/{card_id}/spend",
+            json={
+                "amount_cents": 2500,
+                "merchant": "Bookstore",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         txns = client.get(f"/api/v1/accounts/{acct_id}/transactions", headers=_auth(token)).json()
         card_txns = [t for t in txns if t["type"] == "card_spend"]
         assert len(card_txns) >= 1
@@ -339,17 +442,30 @@ class TestCrossUserIsolation:
 
     def test_deposit_denied(self, client):
         _, tok_b, acct_a, _, _ = self._setup_two_users(client)
-        assert client.post(
-            f"/api/v1/accounts/{acct_a}/deposit",
-            json={"amount_cents": 100}, headers=_auth(tok_b),
-        ).status_code == 403
+        assert (
+            client.post(
+                f"/api/v1/accounts/{acct_a}/deposit",
+                json={"amount_cents": 100},
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_transfer_from_other_user_denied(self, client):
         _, tok_b, acct_a, acct_b, _ = self._setup_two_users(client)
-        assert client.post("/api/v1/transfers", json={
-            "source_account_id": acct_a, "destination_account_id": acct_b,
-            "amount_cents": 100, "idempotency_key": _idem(),
-        }, headers=_auth(tok_b)).status_code == 403
+        assert (
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": acct_a,
+                    "destination_account_id": acct_b,
+                    "amount_cents": 100,
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_get_card_denied(self, client):
         _, tok_b, _, _, card_a = self._setup_two_users(client)
@@ -357,39 +473,74 @@ class TestCrossUserIsolation:
 
     def test_card_spend_denied(self, client):
         _, tok_b, _, _, card_a = self._setup_two_users(client)
-        assert client.post(f"/api/v1/cards/{card_a}/spend", json={
-            "amount_cents": 100, "merchant": "Thief", "idempotency_key": _idem(),
-        }, headers=_auth(tok_b)).status_code == 403
+        assert (
+            client.post(
+                f"/api/v1/cards/{card_a}/spend",
+                json={
+                    "amount_cents": 100,
+                    "merchant": "Thief",
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_card_status_update_denied(self, client):
         _, tok_b, _, _, card_a = self._setup_two_users(client)
-        assert client.patch(
-            f"/api/v1/cards/{card_a}", json={"status": "blocked"}, headers=_auth(tok_b),
-        ).status_code == 403
+        assert (
+            client.patch(
+                f"/api/v1/cards/{card_a}",
+                json={"status": "blocked"},
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_list_cards_denied(self, client):
         _, tok_b, acct_a, _, _ = self._setup_two_users(client)
-        assert client.get(
-            f"/api/v1/accounts/{acct_a}/cards", headers=_auth(tok_b),
-        ).status_code == 403
+        assert (
+            client.get(
+                f"/api/v1/accounts/{acct_a}/cards",
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_transactions_denied(self, client):
         _, tok_b, acct_a, _, _ = self._setup_two_users(client)
-        assert client.get(
-            f"/api/v1/accounts/{acct_a}/transactions", headers=_auth(tok_b),
-        ).status_code == 403
+        assert (
+            client.get(
+                f"/api/v1/accounts/{acct_a}/transactions",
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_statement_create_denied(self, client):
         _, tok_b, acct_a, _, _ = self._setup_two_users(client)
-        assert client.post(f"/api/v1/accounts/{acct_a}/statements", json={
-            "start_date": "2020-01-01", "end_date": "2026-12-31",
-        }, headers=_auth(tok_b)).status_code == 403
+        assert (
+            client.post(
+                f"/api/v1/accounts/{acct_a}/statements",
+                json={
+                    "start_date": "2020-01-01",
+                    "end_date": "2026-12-31",
+                },
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
     def test_account_status_update_denied(self, client):
         _, tok_b, acct_a, _, _ = self._setup_two_users(client)
-        assert client.patch(
-            f"/api/v1/accounts/{acct_a}", json={"status": "frozen"}, headers=_auth(tok_b),
-        ).status_code == 403
+        assert (
+            client.patch(
+                f"/api/v1/accounts/{acct_a}",
+                json={"status": "frozen"},
+                headers=_auth(tok_b),
+            ).status_code
+            == 403
+        )
 
 
 # ── 6. Cross-User Transfer (A Sends to B) ───────────────────────────────
@@ -403,10 +554,16 @@ class TestCrossUserTransfer:
         tok_b, _ = _create_user(client, "xferB@test.com", "Bob", "B")
         acct_a = _create_funded_account(client, tok_a, amount_cents=100000)
         acct_b = _create_funded_account(client, tok_b, amount_cents=0)
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": acct_a, "destination_account_id": acct_b,
-            "amount_cents": 25000, "idempotency_key": _idem(),
-        }, headers=_auth(tok_a))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": acct_a,
+                "destination_account_id": acct_b,
+                "amount_cents": 25000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(tok_a),
+        )
         assert resp.status_code == 201
         # Verify balances
         a = client.get(f"/api/v1/accounts/{acct_a}", headers=_auth(tok_a)).json()
@@ -425,10 +582,16 @@ class TestLedgerInvariant:
         token, _ = _create_user(client, "ledger1@test.com")
         a1 = _create_funded_account(client, token, amount_cents=100000)
         a2 = _create_funded_account(client, token, "savings", 0)
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 30000, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 30000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         # Source has debit
         src_txns = client.get(f"/api/v1/accounts/{a1}/transactions", headers=_auth(token)).json()
         debits = [t for t in src_txns if t["type"] == "debit"]
@@ -446,20 +609,38 @@ class TestLedgerInvariant:
         a1 = _create_funded_account(client, token, amount_cents=100000)
         a2 = _create_funded_account(client, token, "savings", 0)
         # Transfer out
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 20000, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 20000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         # Transfer in
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a2, "destination_account_id": a1,
-            "amount_cents": 5000, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a2,
+                "destination_account_id": a1,
+                "amount_cents": 5000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         # Card spend
         card = client.post(f"/api/v1/accounts/{a1}/cards", headers=_auth(token)).json()
-        client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 3000, "merchant": "Store", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 3000,
+                "merchant": "Store",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
 
         # Calculate from ledger
         txns = client.get(f"/api/v1/accounts/{a1}/transactions", headers=_auth(token)).json()
@@ -485,22 +666,41 @@ class TestStatementCorrectness:
         a2 = _create_funded_account(client, token, "savings", 0)
         # Transfers
         for amt in (20000, 10000, 5000):
-            client.post("/api/v1/transfers", json={
-                "source_account_id": a1, "destination_account_id": a2,
-                "amount_cents": amt, "idempotency_key": _idem(),
-            }, headers=_auth(token))
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": a1,
+                    "destination_account_id": a2,
+                    "amount_cents": amt,
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(token),
+            )
         # Card spend
         card = client.post(f"/api/v1/accounts/{a1}/cards", headers=_auth(token)).json()
-        client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 7500, "merchant": "Restaurant", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 7500,
+                "merchant": "Restaurant",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
 
         today = date.today().isoformat()
-        stmt = client.post(f"/api/v1/accounts/{a1}/statements", json={
-            "start_date": "2020-01-01", "end_date": today,
-        }, headers=_auth(token)).json()
+        stmt = client.post(
+            f"/api/v1/accounts/{a1}/statements",
+            json={
+                "start_date": "2020-01-01",
+                "end_date": today,
+            },
+            headers=_auth(token),
+        ).json()
 
-        calc = stmt["opening_balance_cents"] + stmt["total_credits_cents"] - stmt["total_debits_cents"]
+        calc = (
+            stmt["opening_balance_cents"] + stmt["total_credits_cents"] - stmt["total_debits_cents"]
+        )
         assert stmt["closing_balance_cents"] == calc
 
     def test_statement_on_closed_account(self, client):
@@ -509,25 +709,41 @@ class TestStatementCorrectness:
         a = _create_funded_account(client, token, amount_cents=50000)
         a2 = _create_funded_account(client, token, "savings", 0)
         # Drain and close
-        client.post("/api/v1/transfers", json={
-            "source_account_id": a, "destination_account_id": a2,
-            "amount_cents": 50000, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a,
+                "destination_account_id": a2,
+                "amount_cents": 50000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         client.patch(f"/api/v1/accounts/{a}", json={"status": "closed"}, headers=_auth(token))
         # Statement should still work
         today = date.today().isoformat()
-        resp = client.post(f"/api/v1/accounts/{a}/statements", json={
-            "start_date": "2020-01-01", "end_date": today,
-        }, headers=_auth(token))
+        resp = client.post(
+            f"/api/v1/accounts/{a}/statements",
+            json={
+                "start_date": "2020-01-01",
+                "end_date": today,
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 201
         assert resp.json()["transaction_count"] >= 2
 
     def test_statement_empty_period(self, client):
         token, _ = _create_user(client, "stmt3@test.com")
         a = _create_funded_account(client, token, amount_cents=50000)
-        resp = client.post(f"/api/v1/accounts/{a}/statements", json={
-            "start_date": "2030-01-01", "end_date": "2030-12-31",
-        }, headers=_auth(token))
+        resp = client.post(
+            f"/api/v1/accounts/{a}/statements",
+            json={
+                "start_date": "2030-01-01",
+                "end_date": "2030-12-31",
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 201
         assert resp.json()["transaction_count"] == 0
 
@@ -577,14 +793,26 @@ class TestIdempotency:
         a1 = _create_funded_account(client, token, amount_cents=100000)
         a2 = _create_funded_account(client, token, "savings", 0)
         key = _idem()
-        r1 = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 25000, "idempotency_key": key,
-        }, headers=_auth(token))
-        r2 = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 25000, "idempotency_key": key,
-        }, headers=_auth(token))
+        r1 = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 25000,
+                "idempotency_key": key,
+            },
+            headers=_auth(token),
+        )
+        r2 = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 25000,
+                "idempotency_key": key,
+            },
+            headers=_auth(token),
+        )
         assert r1.status_code == 201
         assert r2.status_code == 200
         assert r1.json()["id"] == r2.json()["id"]
@@ -596,16 +824,30 @@ class TestIdempotency:
         acct_id = _create_funded_account(client, token, amount_cents=100000)
         card = client.post(f"/api/v1/accounts/{acct_id}/cards", headers=_auth(token)).json()
         key = _idem()
-        r1 = client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 5000, "merchant": "Shop", "idempotency_key": key,
-        }, headers=_auth(token))
-        r2 = client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 5000, "merchant": "Shop", "idempotency_key": key,
-        }, headers=_auth(token))
+        r1 = client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 5000,
+                "merchant": "Shop",
+                "idempotency_key": key,
+            },
+            headers=_auth(token),
+        )
+        r2 = client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 5000,
+                "merchant": "Shop",
+                "idempotency_key": key,
+            },
+            headers=_auth(token),
+        )
         assert r1.status_code == 201
         assert r2.status_code == 200
         assert r1.json()["id"] == r2.json()["id"]
-        bal = client.get(f"/api/v1/accounts/{acct_id}", headers=_auth(token)).json()["balance_cents"]
+        bal = client.get(f"/api/v1/accounts/{acct_id}", headers=_auth(token)).json()[
+            "balance_cents"
+        ]
         assert bal == 95000
 
 
@@ -618,49 +860,87 @@ class TestEdgeCases:
     def test_deposit_zero_rejected(self, client):
         token, _ = _create_user(client, "edge1@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
-        assert client.post(
-            f"/api/v1/accounts/{a}/deposit", json={"amount_cents": 0}, headers=_auth(token),
-        ).status_code == 400
+        assert (
+            client.post(
+                f"/api/v1/accounts/{a}/deposit",
+                json={"amount_cents": 0},
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
 
     def test_deposit_negative_rejected(self, client):
         token, _ = _create_user(client, "edge2@test.com")
         a = _create_funded_account(client, token, amount_cents=0)
-        assert client.post(
-            f"/api/v1/accounts/{a}/deposit", json={"amount_cents": -1000}, headers=_auth(token),
-        ).status_code == 400
+        assert (
+            client.post(
+                f"/api/v1/accounts/{a}/deposit",
+                json={"amount_cents": -1000},
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
 
     def test_transfer_nonexistent_destination(self, client):
         token, _ = _create_user(client, "edge3@test.com")
         a = _create_funded_account(client, token, amount_cents=50000)
-        assert client.post("/api/v1/transfers", json={
-            "source_account_id": a, "destination_account_id": "nonexistent-id",
-            "amount_cents": 100, "idempotency_key": _idem(),
-        }, headers=_auth(token)).status_code == 404
+        assert (
+            client.post(
+                "/api/v1/transfers",
+                json={
+                    "source_account_id": a,
+                    "destination_account_id": "nonexistent-id",
+                    "amount_cents": 100,
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(token),
+            ).status_code
+            == 404
+        )
 
     def test_deposit_nonexistent_account(self, client):
         token, _ = _create_user(client, "edge4@test.com")
-        assert client.post(
-            "/api/v1/accounts/nonexistent-id/deposit",
-            json={"amount_cents": 100}, headers=_auth(token),
-        ).status_code == 404
+        assert (
+            client.post(
+                "/api/v1/accounts/nonexistent-id/deposit",
+                json={"amount_cents": 100},
+                headers=_auth(token),
+            ).status_code
+            == 404
+        )
 
     def test_card_spend_overdraft_rejected(self, client):
         token, _ = _create_user(client, "edge5@test.com")
         acct_id = _create_funded_account(client, token, amount_cents=1000)
         card = client.post(f"/api/v1/accounts/{acct_id}/cards", headers=_auth(token)).json()
-        assert client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 9999, "merchant": "X", "idempotency_key": _idem(),
-        }, headers=_auth(token)).status_code == 400
+        assert (
+            client.post(
+                f"/api/v1/cards/{card['id']}/spend",
+                json={
+                    "amount_cents": 9999,
+                    "merchant": "X",
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
 
     def test_transfer_exact_balance_succeeds(self, client):
         """Transferring exactly the available balance should succeed."""
         token, _ = _create_user(client, "edge6@test.com")
         a1 = _create_funded_account(client, token, amount_cents=50000)
         a2 = _create_funded_account(client, token, "savings", 0)
-        resp = client.post("/api/v1/transfers", json={
-            "source_account_id": a1, "destination_account_id": a2,
-            "amount_cents": 50000, "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            "/api/v1/transfers",
+            json={
+                "source_account_id": a1,
+                "destination_account_id": a2,
+                "amount_cents": 50000,
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 201
         bal = client.get(f"/api/v1/accounts/{a1}", headers=_auth(token)).json()["balance_cents"]
         assert bal == 0
@@ -670,11 +950,19 @@ class TestEdgeCases:
         token, _ = _create_user(client, "edge7@test.com")
         acct_id = _create_funded_account(client, token, amount_cents=5000)
         card = client.post(f"/api/v1/accounts/{acct_id}/cards", headers=_auth(token)).json()
-        resp = client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 5000, "merchant": "AllIn", "idempotency_key": _idem(),
-        }, headers=_auth(token))
+        resp = client.post(
+            f"/api/v1/cards/{card['id']}/spend",
+            json={
+                "amount_cents": 5000,
+                "merchant": "AllIn",
+                "idempotency_key": _idem(),
+            },
+            headers=_auth(token),
+        )
         assert resp.status_code == 201
-        bal = client.get(f"/api/v1/accounts/{acct_id}", headers=_auth(token)).json()["balance_cents"]
+        bal = client.get(f"/api/v1/accounts/{acct_id}", headers=_auth(token)).json()[
+            "balance_cents"
+        ]
         assert bal == 0
 
     def test_card_spend_one_cent_over_rejected(self, client):
@@ -682,9 +970,18 @@ class TestEdgeCases:
         token, _ = _create_user(client, "edge8@test.com")
         acct_id = _create_funded_account(client, token, amount_cents=5000)
         card = client.post(f"/api/v1/accounts/{acct_id}/cards", headers=_auth(token)).json()
-        assert client.post(f"/api/v1/cards/{card['id']}/spend", json={
-            "amount_cents": 5001, "merchant": "X", "idempotency_key": _idem(),
-        }, headers=_auth(token)).status_code == 400
+        assert (
+            client.post(
+                f"/api/v1/cards/{card['id']}/spend",
+                json={
+                    "amount_cents": 5001,
+                    "merchant": "X",
+                    "idempotency_key": _idem(),
+                },
+                headers=_auth(token),
+            ).status_code
+            == 400
+        )
 
 
 # ── 12. Middleware ───────────────────────────────────────────────────────
@@ -721,14 +1018,25 @@ class TestAuthEdgeCases:
     """Boundary conditions on authentication."""
 
     def test_signup_empty_email(self, client):
-        assert client.post("/api/v1/auth/signup", json={
-            "email": "", "password": "StrongPass1!",
-        }).status_code == 422
+        assert (
+            client.post(
+                "/api/v1/auth/signup",
+                json={
+                    "email": "",
+                    "password": "StrongPass1!",
+                },
+            ).status_code
+            == 422
+        )
 
     def test_signup_password_exactly_8_chars(self, client):
-        resp = client.post("/api/v1/auth/signup", json={
-            "email": "exact8@test.com", "password": "Abcdef1!",
-        })
+        resp = client.post(
+            "/api/v1/auth/signup",
+            json={
+                "email": "exact8@test.com",
+                "password": "Abcdef1!",
+            },
+        )
         assert resp.status_code == 201
 
     def test_protected_routes_without_token(self, client):

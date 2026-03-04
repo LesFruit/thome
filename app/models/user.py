@@ -28,7 +28,9 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
 
     refresh_tokens = relationship(
-        "RefreshToken", back_populates="user", cascade="all, delete-orphan",
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
 

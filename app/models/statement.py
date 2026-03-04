@@ -3,7 +3,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 
 from app.database import Base
 
@@ -18,6 +18,11 @@ def _new_id():
 
 class Statement(Base):
     __tablename__ = "statements"
+    __table_args__ = (
+        UniqueConstraint(
+            "account_id", "start_date", "end_date", name="uq_statement_account_period"
+        ),
+    )
 
     id = Column(String, primary_key=True, default=_new_id)
     account_id = Column(String, ForeignKey("accounts.id"), nullable=False)

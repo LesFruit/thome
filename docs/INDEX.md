@@ -4,7 +4,7 @@
 
 | ID | Title | Path | Purpose |
 |----|-------|------|---------|
-| D-001 | Requirements Plan | `REQUIREMENTS.MD` | Single-source-of-truth implementation plan |
+| D-001 | PRD Plan | `PRD.MD` | Single-source-of-truth implementation plan |
 | D-002 | README | `README.md` | Setup, API reference, project structure |
 | D-003 | AI Usage Report | `docs/AI_USAGE.md` | AI-driven development evidence log |
 | D-004 | Documentation Index | `docs/INDEX.md` | This file |
@@ -15,17 +15,17 @@
 | D-009 | Test Health | `tests/test_health.py` | Health/readiness probe tests (2) |
 | D-010 | Test Middleware | `tests/test_middleware.py` | Request ID, error envelopes (6) |
 | D-011 | Test Auth | `tests/test_auth.py` | Auth lifecycle tests (12) |
-| D-012 | Test Accounts | `tests/test_holders_accounts.py` | Holder + account tests (13) |
+| D-012 | Test Accounts | `tests/test_holders_accounts.py` | Holder + account tests (15) |
 | D-013 | Test Transfers | `tests/test_transfers.py` | Transfer + ledger tests (9) |
-| D-014 | Test Cards | `tests/test_cards.py` | Card + spend tests (12) |
-| D-015 | Test Statements | `tests/test_statements.py` | Statement tests (5) |
+| D-014 | Test Cards | `tests/test_cards.py` | Card + spend tests (13) |
+| D-015 | Test Statements | `tests/test_statements.py` | Statement tests (6) |
 | D-016 | Test Logging | `tests/test_logging_and_health.py` | Logging/sanitization tests (5) |
 | D-017 | Demo Client | `scripts/test_client.py` | 13-step E2E backend flow |
 | D-018 | Dashboard | `static/index.html` | 7-tab SPA (1300+ lines, dark/light theme, ops panel) |
 | D-019 | Test Stress | `tests/test_stress.py` | Concurrency/stress tests (6) |
 | D-020 | CI Pipeline | `.github/workflows/validate.yml` | Lint, test, docker smoke |
 | D-021 | SLO Benchmark | `scripts/benchmark.py` | Latency measurement |
-| D-022 | Playwright E2E | `tests/test_playwright.py` | 2 story-driven E2E tests (40+ assertions) + MP4 video |
+| D-022 | Playwright E2E | `tests/test_playwright.py` | 3 Playwright tests (story flows + API components) + MP4 video |
 | D-023 | Seed Data | `scripts/seed_data.py` | Demo environment seeder |
 | D-024 | Demo Recorder | `scripts/record_demo.py` | Records MP4 walkthrough video |
 | D-025 | Test Logs | `docs/logs/` | API, E2E, backend story, lint logs |
